@@ -8,7 +8,7 @@ El presente desarrollo está solo diseñado para funcionamiento local. Por lo ta
 #### Clonar el proyecto
 
 ```bash
-  git clone https://link-to-project
+  git clone https://link-to-project](https://github.com/amcdvg/Ejercicios_wimspro.git
 ```
 
 
