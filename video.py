@@ -411,7 +411,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
                 if velocities:
                     raw_vmed = sum(velocities) / len(velocities)
                     raw_vmax = max(velocities) 
-                    last_vmed = raw_vmed/1.5#normalize_value(raw_vmed, 0, 1)/2
+                    last_vmed = raw_vmed#/1.5#normalize_value(raw_vmed, 0, 1)/2
                     last_vmax = normalize_value(raw_vmax, 0, 2)/10
 
                 # Reiniciar ángulos mínimo y máximo para la próxima repetición
