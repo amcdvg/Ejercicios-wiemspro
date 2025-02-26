@@ -12,37 +12,26 @@ from utils.metrics import Metrics
 import time
 
 exercises = ['curl', 'squat', 'pushup', 'plank']
+class_mapping = {
+            'CurlExercise': CurlExercise,
+            'SquatExercise': SquatExercise,
+            'PushupExercise': PushupExercise,
+            'PlankExercise': PlankExercise}
+
 def main():
     """orquestador de todo
     """
     exercise_type = exercises[1]
-    exercise_mapping = {
-    'curl': (CurlExercise, [
-        K.YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_ELBOW'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_WRIST']
-    ]),
-    'squat': (SquatExercise, [
-        K.YOLO_POSE_KEYPOINTS['RIGHT_HIP'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_KNEE'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_ANKLE']
-    ]),
-    'pushup': (PushupExercise, [
-        K.YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_ELBOW'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_WRIST']
-    ]),
-    'plank': (PlankExercise, [
-        K.YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_HIP'],
-        K.YOLO_POSE_KEYPOINTS['RIGHT_KNEE']
-    ])}
-    
-    exercise_type = exercises[0]
-    exercise_class, relevant_indices = exercise_mapping.get(exercise_type, (None, None))
-    if exercise_class is None:
+    class_name_str, relevant_indices = K.EXERCISE_MAPPING.get(exercise_type, (None, None))
+
+    if class_name_str is None:
         print("Ejercicio no reconocido")
         return
+    exercise_class = class_mapping.get(class_name_str, None)
+    if exercise_class is None:
+        print("La clase para el ejercicio no fue encontrada")
+        return
+    # Instanciar el ejercicio
     exercise = exercise_class()
     # instanciamos pose_estimator
     pose_estimator = PoseEstimator()
@@ -53,11 +42,10 @@ def main():
     subject_height = 1.71  # en metros
     subject_gender = "male"  # "male" o "female"
     subject_age = 22  # años
-
     # Instanciar la clase Metrics para el ejercicio actual
     metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
     last_counter = 0 
-
+    
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -77,7 +65,6 @@ def main():
                 last_counter = exercise.counter
                 # Reiniciar las métricas para la próxima repetición
                 metrics_obj.reset()
-                
 
         exercise.draw(annotated_frame)
         cv2.imshow('Virtual GYM', annotated_frame)

@@ -19,6 +19,41 @@ class Constants:
         'LEFT_ANKLE': 15,
         'RIGHT_ANKLE': 16}
     
+    EXERCISE_MAPPING = {
+        'curl': (
+            'CurlExercise', 
+            [
+                YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
+                YOLO_POSE_KEYPOINTS['RIGHT_ELBOW'],
+                YOLO_POSE_KEYPOINTS['RIGHT_WRIST']
+            ]
+        ),
+        'squat': (
+            'SquatExercise',
+            [
+                YOLO_POSE_KEYPOINTS['RIGHT_HIP'],
+                YOLO_POSE_KEYPOINTS['RIGHT_KNEE'],
+                YOLO_POSE_KEYPOINTS['RIGHT_ANKLE']
+            ]
+        ),
+        'pushup': (
+            'PushupExercise',
+            [
+                YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
+                YOLO_POSE_KEYPOINTS['RIGHT_ELBOW'],
+                YOLO_POSE_KEYPOINTS['RIGHT_WRIST']
+            ]
+        ),
+        'plank': (
+            'PlankExercise',
+            [
+                YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER'],
+                YOLO_POSE_KEYPOINTS['RIGHT_HIP'],
+                YOLO_POSE_KEYPOINTS['RIGHT_KNEE']
+            ]
+        )
+    }
+    
     CURL_COUNTER = 0
     CURL_STAGE = None
     CURL_MAX_ANGLE = 140
