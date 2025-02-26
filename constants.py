@@ -21,7 +21,7 @@ class Constants:
     
     CURL_COUNTER = 0
     CURL_STAGE = None
-    CURL_MAX_ANGLE = 160
+    CURL_MAX_ANGLE = 140
     CURL_MIN_ANGLE = 30
 
     SQUAT_COUNTER = 0

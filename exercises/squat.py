@@ -9,25 +9,21 @@ def valid_keypoints(confs, indices, threshold=0.3):
 
 class SquatExercise(Exercise):
     """_summary_
-
-    Args:
-        Exercise (_type_): _description_
     """
     def __init__(self):
+        """_summary_
+        """
         self.counter = 0
         self.stage = None
         self.latest_leg_angle = None
         self.latest_torso_angle = None
         self.leg_angle_pos = None
         self.torso_angle_pos = None
-
     def update(self, keypoints, confs: float):
         """_summary_
-
         Args:
-            keypoints (_type_): _description_
-            confs (float): _description_
-
+            keypoints (_type_): Puntos de referencia de yolo pose estimation
+            confs (float): confianza de la detección 
         Returns:
             _type_: _description_
         """
@@ -46,12 +42,12 @@ class SquatExercise(Exercise):
             self.latest_torso_angle = torso_angle
             self.leg_angle_pos = tuple(map(int, r_knee))
             self.torso_angle_pos = tuple(map(int, r_hip))
-            if leg_angle < K.SQUAT_MIN_ANGLE and torso_angle < K.SQUAT_TORSO_MIN_ANGLE and self.stage != "down":
+            if leg_angle < K.SQUAT_MIN_ANGLE and self.stage != "down": #and torso_angle < K.SQUAT_TORSO_MIN_ANGLE
                 self.stage = "down"
             elif leg_angle > K.SQUAT_MAX_ANGLE and self.stage == "down":
                 self.stage = "up"
                 self.counter += 1
-            return leg_angle, torso_angle
+            return leg_angle#, torso_angle
         return None, None
 
     def draw(self, frame):

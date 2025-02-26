@@ -6,7 +6,7 @@ from constants import Constants as K
 class PoseEstimator:
     """_summary_
     """
-    def __init__(self, model_path='yolo11n-pose.pt'):
+    def __init__(self, model_path='models/yolo11n-pose.pt'):
         self.model = YOLO(model_path)
         
     def estimate(self, frame, relevant_indices=None):
