@@ -120,7 +120,7 @@ class Metrics:
         vmax = max(smoothed_velocities)
         #vmax = min(vmax, 1.5)
         return vmax
-    def get_metrics(self) -> dict:
+    def get_metrics(self, repetition: int = None) -> dict:
         """_summary_
 
         Returns:
@@ -129,8 +129,9 @@ class Metrics:
         min_angle = min(self.angles) if self.angles else None
         max_angle = max(self.angles) if self.angles else None
         type_length = f'leg_length' if self.exercise=='squat' else f'forearm_lenght'
-        return {
+        metrics_dict = {
             "exercise": self.exercise,
+            'repetition': 0,
             "height": self.height,
             "gender": self.gender,
             "age": self.age,
@@ -141,6 +142,9 @@ class Metrics:
             "VMED (m/s)": self.calculate_vmed(),
             "VMAX (m/s)": self.calculate_vmax()
         }
+        if repetition is not None:
+            metrics_dict["repetition"] = repetition
+        return metrics_dict
     def reset(self):
         self.angles = []
         self.timestamps = []

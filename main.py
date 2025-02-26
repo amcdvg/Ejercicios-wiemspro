@@ -44,8 +44,8 @@ def main():
     subject_age = 22  # años
     # Instanciar la clase Metrics para el ejercicio actual
     metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
-    last_counter = 0 
-    
+    last_counter = 0
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -54,13 +54,13 @@ def main():
         if data is not None:
             keypoints, confs = data
             angle_value = exercise.update(keypoints, confs)
-
+            
             if angle_value is not None:
                 current_time = time.time()
                 metrics_obj.update(angle_value, current_time)
 
             if exercise.counter > last_counter:
-                rep_metrics = metrics_obj.get_metrics()
+                rep_metrics = metrics_obj.get_metrics(exercise.counter)
                 print("Repetición completada:", rep_metrics)
                 last_counter = exercise.counter
                 # Reiniciar las métricas para la próxima repetición
