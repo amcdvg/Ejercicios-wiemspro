@@ -53,6 +53,31 @@ class Constants:
             ]
         )
     }
+    REGRESSION_PARAMS = {
+        'curl': {
+            'male': {'A': -0.02, 'B': 0.16, 'C': 0.0005, 'D': 0.02},
+            'female': {'A': -0.03, 'B': 0.15, 'C': 0.0004, 'D': 0.0}
+        },
+        'pushup': {
+            'male': {'A': -0.02, 'B': 0.16, 'C': 0.0005, 'D': 0.02},
+            'female': {'A': -0.03, 'B': 0.15, 'C': 0.0004, 'D': 0.0}
+        },
+        'plank': {
+            'default': {'A': 0.0, 'B': 0.5, 'C': 0.0, 'D': 0.0}
+        },
+        'squat': {
+            'male': {'A': -69.4/3.38, 'B': 1/3.38, 'C': 0.0, 'D': 0.02},
+            'female': {'A': -46.7/3.47, 'B': 1/3.47, 'C': 0.0, 'D': 0.0}}}
+    EFFECTIVE_LENGTH_FUNCTIONS = {
+        'squat': lambda h: 0.85 * (0.245 * h) + (0.246 * h),
+        'curl': lambda h: 0.95 * (0.146 * h),
+        'pushup': lambda h: 0.75 * ((0.093 * h) + (0.146 * h)),
+        'plank': lambda h: 0.43 * h}
+    
+    ADJUSTMENT_FACTORS_VMAX = {
+        'curl' : 0.858,
+        'pushup' : 0.858,
+        'squat' : 0.75}
     
     SHOW_POSE_OVERLAYS = None
 
