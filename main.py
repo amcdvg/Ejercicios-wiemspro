@@ -50,22 +50,25 @@ def main():
         ret, frame = cap.read()
         if not ret:
             break
+
         data, annotated_frame = pose_estimator.estimate(frame, relevant_indices)
         if data is not None:
             keypoints, confs = data
             angle_value = exercise.update(keypoints, confs)
-            
             if angle_value is not None:
                 current_time = time.time()
                 metrics_obj.update(angle_value, current_time)
-
+            # Verificar si se completó una repetición
             if exercise.counter > last_counter:
                 rep_metrics = metrics_obj.get_metrics(exercise.counter)
                 print("Repetición completada:", rep_metrics)
                 last_counter = exercise.counter
-                # Reiniciar las métricas para la próxima repetición
                 metrics_obj.reset()
-
+        else:
+            # Si data es None, podemos opcionalmente dibujar un mensaje en pantalla
+            cv2.putText(annotated_frame, "No se detectaron keypoints", (50, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        # Siempre dibujar la interfaz del ejercicio
         exercise.draw(annotated_frame)
         cv2.imshow('Virtual GYM', annotated_frame)
         if cv2.waitKey(10) & 0xFF == ord('q'):

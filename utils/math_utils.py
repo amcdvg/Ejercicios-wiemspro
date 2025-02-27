@@ -1,15 +1,20 @@
 import numpy as np
 
 def calculate_angle(a, b, c):
-        """_summary_
+        """
+        Calcula el ángulo formado por tres puntos.
+
+        Este método toma tres puntos (a, b, c) y calcula el ángulo en el punto b,
+        utilizando la función arctan2 para determinar la orientación de los segmentos (b→a) y (b→c).
+        La diferencia de estos ángulos se convierte a grados y se ajusta para que el valor final esté en el rango [0, 180]°.
 
         Args:
-            a (_type_): _description_
-            b (_type_): _description_
-            c (_type_): _description_
+            a (iterable): Coordenadas (x, y) del primer punto.
+            b (iterable): Coordenadas (x, y) del punto vértice donde se mide el ángulo.
+            c (iterable): Coordenadas (x, y) del tercer punto.
 
         Returns:
-            _type_: _description_
+            float: El ángulo en grados formado en el punto b, dentro del rango [0, 180]°.
         """
         a = np.array(a)
         b = np.array(b)

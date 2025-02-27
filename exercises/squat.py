@@ -49,7 +49,7 @@ class SquatExercise(Exercise):
                 self.counter += 1
             return leg_angle#, torso_angle
         return None, None
-
+    
     def draw(self, frame):
         """_summary_
 
