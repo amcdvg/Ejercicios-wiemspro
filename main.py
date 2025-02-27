@@ -21,7 +21,7 @@ class_mapping = {
 def main():
     """orquestador de todo
     """
-    exercise_type = exercises[1]
+    exercise_type = exercises[0]
     class_name_str, relevant_indices = K.EXERCISE_MAPPING.get(exercise_type, (None, None))
 
     if class_name_str is None:

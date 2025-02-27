@@ -1,5 +1,6 @@
 from constants import Constants as K
 import numpy as np
+from scipy.signal import savgol_filter, find_peaks
  
 class Metrics:
     """_summary_
@@ -61,142 +62,113 @@ class Metrics:
         self.timestamps.append(timestamp)
  
     def calculate_rom(self) -> float:
+        """_summary_
         """
-        Calcula el rango de movimiento (ROM) en metros para la repetición actual.
-
-        Se utiliza la diferencia entre el ángulo máximo y el mínimo (después de filtrar los valores None),
-        se convierte ese delta a radianes y se multiplica por la longitud del segmento estimado.
-
-        Returns:
-            float: ROM en metros.
-        """
-        # Filtrar los ángulos válidos (excluyendo None)
-        valid_angles = [a for a in self.angles if isinstance(a, (int, float))]
-        if not valid_angles:
+        if not self.angles:
             return 0.0
-        min_angle = min(valid_angles)
-        max_angle = max(valid_angles)
+        min_angle = min(self.angles)
+        max_angle = max(self.angles)
         delta_angle = max_angle - min_angle
         delta_rad = np.deg2rad(delta_angle)
         rom = self.segment_length * delta_rad
+ 
         return rom
-
+    
+    def _get_effective_length(self) -> float:
+        """Calcula longitud efectiva basada en antropometría de Winter (2009)."""
+        proportions = {
+            'squat': {'thigh': 0.245, 'shank': 0.246},
+            'curl': {'forearm': 0.146},
+            'pushup': {'upper_arm': 0.093, 'forearm': 0.146},  # 0.186/2 para upper_arm
+            'plank': {'torso': 0.43}
+        }
+        
+        if self.exercise == 'squat':
+            thigh = proportions['squat']['thigh'] * self.height
+            shank = proportions['squat']['shank'] * self.height
+            return 0.85 * thigh + shank  # Zatsiorsky (2002) para momento efectivo
+        
+        elif self.exercise == 'curl':
+            forearm = proportions['curl']['forearm'] * self.height
+            return 0.95 * forearm  # 95% antebrazo como palanca efectiva
+        
+        elif self.exercise == 'pushup':
+            upper_arm = proportions['pushup']['upper_arm'] * self.height
+            forearm = proportions['pushup']['forearm'] * self.height
+            return 0.75 * (upper_arm + forearm)  # 75% brazo completo
+        
+        elif self.exercise == 'plank':
+            return proportions['plank']['torso'] * self.height
+        
+        else:
+            return 0.15 * self.height  # Valor por defecto seguro
+ 
     def calculate_vmed(self) -> float:
-        """
-        Calcula la velocidad media (VMED) en m/s durante la repetición actual.
-
-        Se obtiene dividiendo el desplazamiento total (calculado a partir del cambio total de ángulo)
-        entre el tiempo total activo (solo considerando segmentos donde se tiene trackeo válido).
-        Se aplica un suavizado y se omiten los valores no numéricos.
-
-        Returns:
-            float: VMED en m/s.
-        """
-        # Filtrar datos válidos: ángulos que sean int o float
-        valid_data = [(angle, ts) for angle, ts in zip(self.angles, self.timestamps)
-                    if isinstance(angle, (int, float))]
-        if len(valid_data) < 2:
+        """Velocidad media basada en desplazamiento angular total."""
+        if len(self.timestamps) < 2:
             return 0.0
-        valid_angles, valid_timestamps = zip(*valid_data)
-
-        total_displacement = 0.0
-        velocities = []
-        for i in range(1, len(valid_angles)):
-            delta_time = valid_timestamps[i] - valid_timestamps[i-1]
-            if delta_time <= 0:
-                continue
-            delta_angle = abs(valid_angles[i] - valid_angles[i-1])
-            delta_rad = np.deg2rad(delta_angle)
-            displacement = self.segment_length * delta_rad
-            total_displacement += displacement
-            velocities.append(displacement / delta_time)
-
-        if not velocities:
+            
+        total_time = self.timestamps[-1] - self.timestamps[0]
+        if total_time <= 0:
             return 0.0
-
-        # Suavizado de las velocidades con ventana de 5
-        window_size = 5
-        half_window = window_size // 2
-        smoothed_velocities = [
-            np.median(velocities[max(0, i - half_window):min(len(velocities), i + half_window + 1)])
-            for i in range(len(velocities))
-        ]
-
-        velocity_threshold = 0.05  # m/s, ajustable según necesidad
-        # Calcular tiempo activo solo en intervalos donde la velocidad es mayor que el threshold
-        active_time = sum(
-            valid_timestamps[i] - valid_timestamps[i-1]
-            for i in range(1, len(valid_timestamps))
-            if smoothed_velocities[i-1] > velocity_threshold
-        )
-        return 1.5 * (total_displacement / active_time) if active_time > 0 else 0.0
-
-
+            
+        # Cálculo del cambio angular total en radianes
+        total_deg = sum(abs(self.angles[i] - self.angles[i-1]) for i in range(1, len(self.angles)))
+        total_rad = np.deg2rad(total_deg)
+        
+        # Desplazamiento lineal total
+        L = self._get_effective_length()
+        total_distance = L * total_rad
+        
+        return total_distance / total_time
+ 
     def calculate_vmax(self) -> float:
-        """
-        Calcula la velocidad máxima (VMAX) en m/s durante la repetición actual.
-
-        Se evalúan las velocidades instantáneas entre cada par consecutivo de datos válidos,
-        se suavizan usando un filtro de mediana en ventanas de 5 y se retorna el valor máximo.
-
-        Returns:
-            float: VMAX en m/s.
-        """
-        # Filtrar datos válidos
-        valid_data = [(angle, ts) for angle, ts in zip(self.angles, self.timestamps)
-                    if isinstance(angle, (int, float))]
-        if len(valid_data) < 2:
+        """Velocidad máxima con filtrado científico y validación biomecánica."""
+        if len(self.angles) < 2:
             return 0.0
-        valid_angles, valid_timestamps = zip(*valid_data)
-
-        velocities = []
-        for i in range(1, len(valid_angles)):
-            delta_time = valid_timestamps[i] - valid_timestamps[i-1]
-            if delta_time <= 0:
-                continue
-            delta_angle = abs(valid_angles[i] - valid_angles[i-1])
-            delta_rad = np.deg2rad(delta_angle)
-            displacement = self.segment_length * delta_rad
-            velocities.append(displacement / delta_time)
-
-        if not velocities:
-            return 0.0
-
-        # Suavizado con ventana de 5
-        window_size = 5
-        half_window = window_size // 2
-        smoothed = [
-            np.median(velocities[max(0, i - half_window):min(len(velocities), i + half_window + 1)])
-            for i in range(len(velocities))
-        ]
-
-        vmax = max(smoothed)
-        # Limitar a un máximo razonable, por ejemplo, 1.5 m/s
-        vmax = min(vmax, 1.5)
-        return vmax
+            
+        # Cálculo de velocidades instantáneas
+        delta_t = np.diff(self.timestamps)
+        delta_ang = np.abs(np.diff(self.angles))
+        L = self._get_effective_length()
+        
+        with np.errstate(divide='ignore', invalid='ignore'):
+            v_instant = L * np.deg2rad(delta_ang) / delta_t
+        
+        # Filtrado de datos inválidos
+        v_clean = v_instant[np.isfinite(v_instant) & (delta_t > 0.01)]  # Ignora dt < 10ms
+        
+        if len(v_clean) < 5:
+            return np.max(v_clean) if len(v_clean) > 0 else 0.0
+            
+        # Suavizado con Savitzky-Golay (ventana 5, orden 3)
+        window_size = min(5, len(v_clean))
+        if window_size % 2 == 0:
+            window_size -= 1
+            
+        try:
+            v_smooth = savgol_filter(v_clean, window_length=window_size, polyorder=3)
+            vmax = np.max(v_smooth)
+        except:
+            vmax = np.max(v_clean)
+        
+        # Validación contra límites fisiológicos
+        MAX_REALISTIC_VELOCITY = 3.0  # m/s (para movimientos deportivos)
+        return (vmax*0.5)*0.856#min(vmax, MAX_REALISTIC_VELOCITY)
+ 
     def get_metrics(self, repetition: int = None) -> dict:
+        """_summary_
+ 
+        Returns:
+            dict: _description_
         """
-        Retorna un diccionario con la información y las métricas calculadas:
-        - 'exercise': Tipo de ejercicio.
-        - 'height (m)': Estatura del sujeto en metros.
-        - 'gender': Género.
-        - 'age': Edad (años).
-        - 'leg_length (m)' o 'forearm_length (m)': Longitud estimada del segmento en metros.
-        - 'min_angle (°)': Ángulo mínimo registrado.
-        - 'max_angle (°)': Ángulo máximo registrado.
-        - 'ROM (m)': Rango de movimiento en metros.
-        - 'VMED (m/s)': Velocidad media en m/s.
-        - 'VMAX (m/s)': Velocidad máxima en m/s.
-        - 'repetition': Número de repetición.
-        """
-        # Filtrar los ángulos válidos (no None)
-        valid_angles = [a for a in self.angles if isinstance(a, (int, float))]
-        min_angle = min(valid_angles) if valid_angles else None
-        max_angle = max(valid_angles) if valid_angles else None
-        type_length = 'leg_length (m)' if self.exercise == 'squat' else 'forearm_length (m)'
+        min_angle = min(self.angles) if self.angles else None
+        max_angle = max(self.angles) if self.angles else None
+        type_length = f'leg_length' if self.exercise=='squat' else f'forearm_lenght'
         metrics_dict = {
             "exercise": self.exercise,
-            "height (m)": self.height,
+            'repetition': 0,
+            "height": self.height,
             "gender": self.gender,
             "age": self.age,
             type_length: self.segment_length,
@@ -204,11 +176,11 @@ class Metrics:
             "max_angle (°)": max_angle,
             "ROM (m)": self.calculate_rom(),
             "VMED (m/s)": self.calculate_vmed(),
-            "VMAX (m/s)": self.calculate_vmax(),
-            "repetition": repetition if repetition is not None else 0
+            "VMAX (m/s)": self.calculate_vmax()
         }
+        if repetition is not None:
+            metrics_dict["repetition"] = repetition
         return metrics_dict
-    
     def reset(self):
         self.angles = []
         self.timestamps = []

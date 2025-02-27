@@ -20,7 +20,10 @@ class PoseEstimator:
             _type_: _description_
         """
         results = self.model(frame, verbose=False)
-        annotated_frame = results[0].plot()
+        if K.SHOW_POSE_OVERLAYS:
+            annotated_frame = results[0].plot()
+        else:
+            annotated_frame = frame.copy()
         
         # Verificar si se detectaron keypoints y si contienen datos
         if (results[0].keypoints is None or 

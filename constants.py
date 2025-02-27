@@ -54,6 +54,8 @@ class Constants:
         )
     }
     
+    SHOW_POSE_OVERLAYS = None
+
     CURL_COUNTER = 0
     CURL_STAGE = None
     CURL_MAX_ANGLE = 140
