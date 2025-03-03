@@ -202788,3 +202788,1053 @@ AttributeError: type object 'Constants' has no attribute 'VMED_CORRECTION_FACTOR
 
 2025-03-03 11:23:00,763 [INFO] Main: Application terminated.
 
+2025-03-03 11:52:13,350 [INFO] root: logging succesfully configured
+
+2025-03-03 11:53:22,953 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:22,953 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:22,953 [INFO] utils._utils: Keypoints detected: 6 of 17 (35.3%)
+
+2025-03-03 11:53:23,077 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,077 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,166 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,166 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,268 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,268 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,364 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,364 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,472 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,472 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,572 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,572 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,679 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,679 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,802 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,802 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:23,922 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:23,922 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,025 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,025 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,130 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,130 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,240 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,240 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,347 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,347 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,466 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,466 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,570 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,570 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,676 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,676 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,800 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,800 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:24,904 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:24,904 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,009 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,009 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,109 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,109 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,204 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,205 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,290 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,292 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,389 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,389 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,476 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,476 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,576 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,576 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,668 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,668 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,762 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,762 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,849 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,849 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:25,946 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:25,946 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,038 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,038 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,134 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,134 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,231 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,231 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,325 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,326 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,426 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,427 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,515 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,516 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,615 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,615 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,713 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,713 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,810 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,812 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:26,917 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:26,917 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,006 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,006 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,105 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,105 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,209 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,209 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,306 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,306 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,306 [INFO] utils._utils: Keypoints detected: 12 of 17 (70.6%)
+
+2025-03-03 11:53:27,396 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,396 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,487 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,487 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,487 [INFO] utils._utils: Keypoints detected: 11 of 17 (64.7%)
+
+2025-03-03 11:53:27,577 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,577 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,679 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,679 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,772 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,772 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,866 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,866 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:27,965 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:27,965 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,069 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,069 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,164 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,164 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,262 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,263 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,373 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,373 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,472 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,472 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,566 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,566 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,660 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,660 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,757 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,757 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,850 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,850 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:28,937 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:28,937 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,039 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,039 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,122 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,122 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,222 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,222 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,316 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,316 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,410 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,410 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,500 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,500 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,600 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,600 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,689 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,689 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,689 [INFO] utils._utils: Keypoints detected: 13 of 17 (76.5%)
+
+2025-03-03 11:53:29,784 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,784 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,878 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,878 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:29,878 [INFO] utils._utils: Keypoints detected: 8 of 17 (47.1%)
+
+2025-03-03 11:53:29,966 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:29,966 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,066 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,066 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,159 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,159 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,260 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,262 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,360 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,360 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,454 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,454 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,554 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,554 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,664 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,664 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,774 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,774 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,876 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,876 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:30,964 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:30,964 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,066 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,067 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,179 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,179 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,283 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,283 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,376 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,376 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,475 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,476 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,580 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,580 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,672 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,672 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,768 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,768 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,875 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,875 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:31,963 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:31,963 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,059 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,059 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,150 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,150 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,247 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,247 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,247 [INFO] utils._utils: Keypoints detected: 12 of 17 (70.6%)
+
+2025-03-03 11:53:32,342 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,343 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,343 [INFO] utils._utils: Keypoints detected: 9 of 17 (52.9%)
+
+2025-03-03 11:53:32,435 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,436 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,436 [INFO] utils._utils: Keypoints detected: 12 of 17 (70.6%)
+
+2025-03-03 11:53:32,529 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,530 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,623 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,623 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,715 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,715 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,818 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,818 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:32,928 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:32,928 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,024 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,024 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,119 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,119 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,212 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,212 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,309 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,310 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,417 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,417 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,502 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,502 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,605 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,605 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,692 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,692 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,794 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,794 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:33,900 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:33,902 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,010 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,010 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,112 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,112 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,210 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,210 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,304 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,304 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,400 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,400 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,500 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,500 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,589 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,589 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,692 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,692 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,782 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,782 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,879 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,880 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:34,973 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:34,973 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,072 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,073 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,170 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,170 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,272 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,272 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,377 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,377 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,480 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,480 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,570 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,570 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,570 [INFO] Main: Tiempo de bajada: 0.50 s
+
+2025-03-03 11:53:35,572 [INFO] Main: Repetition completed: {'exercise': 'squat', 'height (m)': 1.71, 'gender': 'male', 'age': 22, 'leg_length (m)': 0.30079171597633136, 'min_angle (°)': 45.61448263601387, 'max_angle (°)': 178.92150812109864, 'ROM (m)': 0.5108802774013871, 'VMED (m/s)': 2.0, 'VMAX (m/s)': 2.0, 'repetition': 1}
+
+2025-03-03 11:53:35,670 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,670 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,768 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,768 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,880 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,880 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:35,988 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:35,989 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,090 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,090 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,189 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,189 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,298 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,298 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,407 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,407 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,497 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,497 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,592 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,592 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,689 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,689 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,800 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,802 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:36,910 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:36,910 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,019 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,019 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,128 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,128 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,239 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,239 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,334 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,334 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,435 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,435 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,538 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,539 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,638 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,638 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,730 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,730 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,822 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,822 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:37,916 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:37,916 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,016 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,016 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,114 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,114 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,214 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,214 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,314 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,314 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,416 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,416 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,505 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,505 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,597 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,597 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,703 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,703 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,813 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,813 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:38,929 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:38,929 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,028 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,028 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,122 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,122 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,227 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,228 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,334 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,335 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,429 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,429 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,429 [INFO] Main: Tiempo de bajada: 2.63 s
+
+2025-03-03 11:53:39,430 [INFO] Main: Repetition completed: {'exercise': 'squat', 'height (m)': 1.71, 'gender': 'male', 'age': 22, 'leg_length (m)': 0.30079171597633136, 'min_angle (°)': 7.565431713407944, 'max_angle (°)': 179.57933365797524, 'ROM (m)': 0.6592188942972697, 'VMED (m/s)': 1.4, 'VMAX (m/s)': 2.0, 'repetition': 2}
+
+2025-03-03 11:53:39,538 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,538 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,644 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,644 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,743 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,743 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,840 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,840 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:39,942 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:39,942 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,036 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,036 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,119 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,120 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,220 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,220 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,320 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,320 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,434 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,434 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,526 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,526 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,626 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,626 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,725 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,725 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,838 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,838 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:40,942 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:40,942 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,054 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,054 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,153 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,153 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,250 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,250 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,345 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,345 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,439 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,439 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,527 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,527 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,630 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,630 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,737 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,737 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,849 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,850 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:41,952 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:41,953 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,052 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,052 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,164 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,164 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,269 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,269 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,378 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,378 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,482 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,482 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,574 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,574 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,672 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,673 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,765 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,766 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,860 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,860 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:42,970 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:42,970 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,080 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,082 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,185 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,185 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,185 [INFO] Main: Tiempo de bajada: 3.44 s
+
+2025-03-03 11:53:43,186 [INFO] Main: Repetition completed: {'exercise': 'squat', 'height (m)': 1.71, 'gender': 'male', 'age': 22, 'leg_length (m)': 0.30079171597633136, 'min_angle (°)': 10.796425379525795, 'max_angle (°)': 166.4341054879961, 'ROM (m)': 0.5964593456240607, 'VMED (m/s)': 1.4, 'VMAX (m/s)': 2.0, 'repetition': 3}
+
+2025-03-03 11:53:43,294 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,294 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,385 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,385 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,478 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,479 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,565 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,565 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,670 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,670 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,780 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,780 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:43,890 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:43,890 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,003 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,003 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,107 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,107 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,212 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,212 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,309 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,309 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,420 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,420 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,420 [INFO] Main: Tiempo de bajada: 0.21 s
+
+2025-03-03 11:53:44,422 [INFO] Main: Repetition completed: {'exercise': 'squat', 'height (m)': 1.71, 'gender': 'male', 'age': 22, 'leg_length (m)': 0.30079171597633136, 'min_angle (°)': 52.21691231796337, 'max_angle (°)': 166.78263638096354, 'ROM (m)': 0.43905689649151247, 'VMED (m/s)': 1.5824247717872708, 'VMAX (m/s)': 2.0, 'repetition': 4}
+
+2025-03-03 11:53:44,522 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,522 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,613 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,613 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,613 [INFO] Main: Tiempo de bajada: 0.09 s
+
+2025-03-03 11:53:44,614 [INFO] Main: Repetition completed: {'exercise': 'squat', 'height (m)': 1.71, 'gender': 'male', 'age': 22, 'leg_length (m)': 0.30079171597633136, 'min_angle (°)': 46.41450269349746, 'max_angle (°)': 169.80573274912453, 'ROM (m)': 0.47287939709351795, 'VMED (m/s)': 2.0, 'VMAX (m/s)': 2.0, 'repetition': 5}
+
+2025-03-03 11:53:44,713 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,713 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,815 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,815 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:44,923 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:44,923 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,030 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,030 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,138 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,138 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,243 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,244 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,342 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,342 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,444 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,444 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,540 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,540 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,633 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,634 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,733 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,733 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,837 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,838 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:45,945 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:45,945 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,057 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,057 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,160 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,160 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,160 [INFO] utils._utils: Keypoints detected: 5 of 17 (29.4%)
+
+2025-03-03 11:53:46,252 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,252 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,347 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,347 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,442 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,442 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,546 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,546 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,643 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,644 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,743 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,743 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,846 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,846 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:46,938 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:46,938 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,035 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,035 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,148 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,148 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,246 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,246 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,347 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,347 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,442 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,442 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,555 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,555 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,662 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,662 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,770 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,770 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,882 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,882 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:47,980 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:47,980 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:48,080 [DEBUG] Main: Procesando frame inicial...
+
+2025-03-03 11:53:48,080 [DEBUG] Main: Keypoints detected: 17
+
+2025-03-03 11:53:48,629 [INFO] Main: Application terminated.
+

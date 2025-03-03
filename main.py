@@ -28,7 +28,7 @@ def main():
     logger = logging.getLogger('Main')
     # Seleccionar el ejercicio (por ejemplo, 'curl')
     try:
-        exercise_type = exercises[0]
+        exercise_type = exercises[1]
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))
         if class_name_str is None:
             logger.error("Exercise not recognized.")
@@ -123,14 +123,12 @@ def main():
                     analyzer.draw_progress_bar(annotated_frame, smooth_progress, (frame_width - 110, 50), 20, 300, (128, 0, 128), 10)
                 if exercise.stage == "down" and exercise.down_start_time is not None:
                     elapsed_phase = time.time() - exercise.down_start_time
-                    max_phase_time = 2.0  # Tiempo máximo esperado para la bajada
                     analyzer.draw_progress_wheel(annotated_frame, 1 - smooth_progress,
                                                  (frame_width - 100, frame_height - frame_height // 3 - 50),
                                                  50, (128, 0, 128), 10, elapsed_phase)
                 # Para la fase de subida
                 elif exercise.stage == "up" and exercise.up_start_time is not None:
                     elapsed_phase = time.time() - exercise.up_start_time
-                    max_phase_time = 2.0  # Tiempo máximo esperado para la subida
                     analyzer.draw_progress_wheel(annotated_frame, 1 - smooth_progress,
                                                  (frame_width - 100, frame_height - frame_height // 3 - 50),
                                                  50, (128, 0, 128), 10, elapsed_phase)

@@ -3,7 +3,7 @@ from constants import Constants as K
 from exercises.base import Exercise
 from utils._utils import calculate_angle, valid_keypoints, valid_full_pose
 import numpy as np
-
+import time
 
 class SquatExercise(Exercise):
     """_summary_
@@ -54,9 +54,15 @@ class SquatExercise(Exercise):
             self.torso_angle_pos = tuple(map(int, r_hip))
             if leg_angle < K.SQUAT_MIN_ANGLE and self.stage != "down": #and torso_angle < K.SQUAT_TORSO_MIN_ANGLE
                 self.stage = "down"
+                if self.stage == "up" and self.up_start_time is not None:
+                    self.up_time = time.time() - self.up_start_time
+                self.stage = "down"
+                self.down_start_time = time.time()
             elif leg_angle > K.SQUAT_MAX_ANGLE and self.stage == "down":
+                self.down_time = time.time() - self.down_start_time
                 self.stage = "up"
                 self.counter += 1
+                self.up_start_time = time.time()
             return leg_angle#, torso_angle
         return None, None
     
