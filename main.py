@@ -78,6 +78,13 @@ def main():
                     logger.debug("Keypoints detected: %s", len(keypoints))
                     # Usar process() si se implementa en la clase base; de lo contrario, update y draw
                     exercise.process(keypoints, confs, annotated_frame)
+                    if exercise.down_time is not None:
+                        logger.info("Tiempo de bajada: %.2f s", exercise.down_time)
+                        # Reiniciar para que no se imprima continuamente
+                        exercise.down_time = None
+                    if exercise.up_time is not None:
+                        logger.info("Tiempo de subida: %.2f s", exercise.up_time)
+                        exercise.up_time = None
                     if exercise.latest_angle is not None:
                         metrics_obj.update(exercise.latest_angle, time.time())
                         if not initialized_angles:
@@ -91,10 +98,7 @@ def main():
                             if exercise.latest_angle > max_angle:
                                 max_angle = exercise.latest_angle
                             # Actulización de los valores de progreso
-                            print(min_angle)
-                            print(max_angle)
                             progress = MotionAnalyzer.normalize_value_bar(exercise.latest_angle, 40, 180)
-                            #smooth_progress = 0.12 * progress + (1 - 0.12) * smooth_progress
                             smooth_progress = 0.115 * progress + (1 - 0.115) * smooth_progress #
                     else:
                         smooth_progress = 0.0
@@ -113,8 +117,23 @@ def main():
                 #exercise.draw(annotated_frame)
                 # Barra de progreso vertical
                 analyzer = MotionAnalyzer()
-                
-                analyzer.draw_progress_bar(annotated_frame, smooth_progress, (frame_width - 110, 50), 20, 300, (128, 0, 128), 10)
+                if smooth_progress ==0:
+                    analyzer.draw_progress_bar(annotated_frame, 1, (frame_width - 110, 50), 20, 300, (128, 0, 128), 10)
+                else:
+                    analyzer.draw_progress_bar(annotated_frame, smooth_progress, (frame_width - 110, 50), 20, 300, (128, 0, 128), 10)
+                if exercise.stage == "down" and exercise.down_start_time is not None:
+                    elapsed_phase = time.time() - exercise.down_start_time
+                    max_phase_time = 2.0  # Tiempo máximo esperado para la bajada
+                    analyzer.draw_progress_wheel(annotated_frame, 1 - smooth_progress,
+                                                 (frame_width - 100, frame_height - frame_height // 3 - 50),
+                                                 50, (128, 0, 128), 10, elapsed_phase)
+                # Para la fase de subida
+                elif exercise.stage == "up" and exercise.up_start_time is not None:
+                    elapsed_phase = time.time() - exercise.up_start_time
+                    max_phase_time = 2.0  # Tiempo máximo esperado para la subida
+                    analyzer.draw_progress_wheel(annotated_frame, 1 - smooth_progress,
+                                                 (frame_width - 100, frame_height - frame_height // 3 - 50),
+                                                 50, (128, 0, 128), 10, elapsed_phase)
                 # Rueda de progreso temporal
                 #center = (frame_width - 100, frame_height - frame_height // 3 - 50)
                 #color_wheel = (0, 255, 0) if phase_type == 'concentric' else (0, 0, 255)
@@ -124,7 +143,7 @@ def main():
                 #    center,
                 #    50,   # Radio
                 #    color_wheel,
-                #    10,   # Grosor
+                #    10,   # G0220000000rosor
                 #    elapsed_time_phase
                 #)
                 # Crear el texto de repeticiones

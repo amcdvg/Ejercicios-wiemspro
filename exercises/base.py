@@ -11,6 +11,11 @@ class Exercise(ABC):
     Método Plantilla:
         - process(keypoints, confs, frame): Ejecuta el flujo completo del ejercicio llamado a update() y draw() en secuencia
     """
+    def __init__(self):
+        self.down_time = None 
+        self.up_time = None  
+        self.down_start_time = None  
+        self.up_start_time = None
     def process(self, keypoints, confs, frame: np.ndarray)-> np.ndarray:
         """
         Ejecuta el flujo de procesamiento del ejercicio.

@@ -131,8 +131,7 @@ class MotionAnalyzer:
         progress_height = int(bar_height * progress)
         
         self.draw_rounded_rect(image, (x, y), bar_width, bar_height, (128, 0, 128), border_radius)
-        self.draw_rounded_rect(image, (x, y + bar_height - progress_height), 
-                             bar_width, progress_height, color, border_radius)
+        self.draw_rounded_rect(image, (x, y + bar_height - progress_height), bar_width, progress_height, color, min(border_radius, progress_height // 2))
         
         percentage_text = f"{int(progress * 100) }%"
         font = cv2.FONT_HERSHEY_SIMPLEX
