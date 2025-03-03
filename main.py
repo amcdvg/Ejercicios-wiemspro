@@ -41,6 +41,8 @@ def main():
         exercise = exercise_class()
         pose_estimator = PoseEstimator()
         cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         if not cap.isOpened():
             logger.error("Error opening camera.")
             return
@@ -91,10 +93,10 @@ def main():
                             # Actulización de los valores de progreso
                             print(min_angle)
                             print(max_angle)
-                            progress = MotionAnalyzer.normalize_value_bar(exercise.latest_angle, 80.8, 180)
-                            smooth_progress = 0.1 * progress + (1 - 0.1) * smooth_progress #
+                            progress = MotionAnalyzer.normalize_value_bar(exercise.latest_angle, 40, 180)
+                            #smooth_progress = 0.12 * progress + (1 - 0.12) * smooth_progress
+                            smooth_progress = 0.115 * progress + (1 - 0.115) * smooth_progress #
                     else:
-                        
                         smooth_progress = 0.0
                     if exercise.counter > last_counter:
                         rep_metrics = metrics_obj.get_metrics(exercise.counter)
