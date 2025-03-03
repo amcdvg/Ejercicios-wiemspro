@@ -1,6 +1,7 @@
 from constants import Constants as K
 import numpy as np
 from scipy.signal import savgol_filter
+from utils._utils import filter_valid_angles, compute_total_angular_change, smooth_velocities
 from utils.anthropometry import Anthopometry
 
 class Metrics:
@@ -58,17 +59,11 @@ class Metrics:
         Returns:
             float: ROM en metros.
         """
-        if not self.angles:
-            return 0.0
-        valid_angles = [a for a in self.angles if isinstance(a, (int, float))]
+        valid_angles = filter_valid_angles(self.angles)
         if not valid_angles:
             return 0.0
-        min_angle = min(valid_angles)
-        max_angle = max(valid_angles)
-        delta_angle = max_angle - min_angle
-        delta_rad = np.deg2rad(delta_angle)
-        rom = self.segment_length * delta_rad
-        return rom
+        total_deg = compute_total_angular_change(valid_angles)
+        return self.segment_length * np.deg2rad(total_deg)
     
     def _get_effective_length(self) -> float:
         """
@@ -89,28 +84,23 @@ class Metrics:
         return calc_func(self.height)
 
     def calculate_vmed(self) -> float:
-        """
-        Calcula la velocidad media (VMED) en m/s durante la repetición actual.
-
-        Se define como el desplazamiento total (derivado del cambio angular acumulado)
-        dividido entre el tiempo total activo (sólo considerando intervalos con datos válidos),
-        usando la longitud efectiva (calculada con _get_effective_length).
+        """Calcula la velocidad media (m/s) para la repetición actual
 
         Returns:
-            float: VMED en m/s.
+            float: velocidad media en m/s.
         """
         if len(self.timestamps) < 2:
             return 0.0
         total_time = self.timestamps[-1] - self.timestamps[0]
         if total_time <= 0:
             return 0.0
-        # Sumar los cambios absolutos entre cada par de ángulos válidos
+        # Use total angular change based on absolute differences
         total_deg = sum(abs(self.angles[i] - self.angles[i-1]) for i in range(1, len(self.angles)))
         total_rad = np.deg2rad(total_deg)
-        L = self._get_effective_length()
-        total_distance = L * total_rad
+        effective_length = self._get_effective_length()
+        total_distance = effective_length * total_rad
         return total_distance / total_time
-
+    
     def calculate_vmax(self) -> float:
         """
         Calcula la velocidad máxima (VMAX) en m/s durante la repetición actual.
@@ -125,25 +115,23 @@ class Metrics:
             return 0.0
         delta_t = np.diff(self.timestamps)
         delta_ang = np.abs(np.diff(self.angles))
-        L = self._get_effective_length()
+        effective_length = self._get_effective_length()
         with np.errstate(divide='ignore', invalid='ignore'):
-            v_instant = L * np.deg2rad(delta_ang) / delta_t
-        
+            v_instant = effective_length * np.deg2rad(delta_ang) / delta_t
         v_clean = v_instant[np.isfinite(v_instant) & (delta_t > 0.01)]
         if len(v_clean) < 5:
-            return np.max(v_clean) if len(v_clean) > 0 else 0.0
-        
-        window_size = min(5, len(v_clean))
-        if window_size % 2 == 0:
-            window_size -= 1
-        try:
-            v_smooth = savgol_filter(v_clean, window_length=window_size, polyorder=3)
-            vmax = np.max(v_smooth)
-        except Exception:
-            vmax = np.max(v_clean)
-        
+            vmax_raw = np.max(v_clean) if len(v_clean) > 0 else 0.0
+        else:
+            window_size = min(5, len(v_clean))
+            if window_size % 2 == 0:
+                window_size -= 1
+            try:
+                v_smooth = smooth_velocities(v_clean, window_size=window_size, polyorder=3)
+                vmax_raw = np.max(v_smooth)
+            except Exception:
+                vmax_raw = np.max(v_clean)
         factor = K.ADJUSTMENT_FACTORS_VMAX.get(self.exercise, 0.856)
-        return (vmax*0.5)*factor
+        return (vmax_raw * 0.5) * factor
         
 
     def get_metrics(self, repetition: int = None) -> dict:

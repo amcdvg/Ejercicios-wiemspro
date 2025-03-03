@@ -3,11 +3,9 @@ import cv2
 import time
 from constants import Constants as K
 from exercises.base import Exercise
-from utils.math_utils import calculate_angle
+from utils._utils import calculate_angle, valid_keypoints
 import numpy as np
 
-def valid_keypoints(confs, indices, threshold=0.3):
-    return np.all(confs[indices] > threshold)
 
 class PlankExercise(Exercise):
     """_summary_
@@ -16,6 +14,7 @@ class PlankExercise(Exercise):
         Exercise (_type_): _description_
     """
     def __init__(self):
+        super().__init__()
         self.start_time = None
         self.elapsed_time = 0
         self.latest_angle = None

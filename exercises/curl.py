@@ -2,21 +2,9 @@
 import cv2
 from constants import Constants as K
 from exercises.base import Exercise
-from utils.math_utils import calculate_angle
+from utils._utils import calculate_angle, valid_keypoints, valid_full_pose
 import numpy as np
 
-def valid_keypoints(confs, indices, threshold: float=0.3):
-    """_summary_
-
-    Args:
-        confs (_type_): _description_
-        indices (_type_): _description_
-        threshold (float, optional): _description_. Defaults to 0.3.
-
-    Returns:
-        _type_: _description_
-    """
-    return np.all(confs[indices] > threshold)
 
 class CurlExercise(Exercise):
     """
@@ -25,6 +13,7 @@ class CurlExercise(Exercise):
         Exercise (_type_): _description_
     """
     def __init__(self):
+        super().__init__()
         self.counter = 0
         self.stage = None
         self.latest_angle = None
@@ -40,6 +29,8 @@ class CurlExercise(Exercise):
         Returns:
             _type_: _description_
         """
+        if not valid_full_pose(confs, threshold=0.3):
+            return None
         shoulder_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER']
         elbow_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_ELBOW']
         wrist_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_WRIST']
@@ -60,7 +51,7 @@ class CurlExercise(Exercise):
     
     def draw(self, frame):
         """_summary_
-
+        
         Args:
             frame (_type_): _description_
         """

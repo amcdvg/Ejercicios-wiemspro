@@ -79,7 +79,7 @@ class Constants:
         'pushup' : 0.858,
         'squat' : 0.75}
     
-    SHOW_POSE_OVERLAYS = None
+    SHOW_POSE_OVERLAYS = True
 
     CURL_COUNTER = 0
     CURL_STAGE = None

@@ -2,11 +2,8 @@
 import cv2
 from constants import Constants as K
 from exercises.base import Exercise
-from utils.math_utils import calculate_angle
+from utils._utils import calculate_angle, valid_keypoints
 import numpy as np
-
-def valid_keypoints(confs, indices, threshold=0.3):
-    return np.all(confs[indices] > threshold)
 
 class PushupExercise(Exercise):
     """_summary_
@@ -15,6 +12,7 @@ class PushupExercise(Exercise):
         Exercise (_type_): _description_
     """
     def __init__(self):
+        super().__init__()
         self.counter = 0
         self.stage = None
         self.latest_angle = None

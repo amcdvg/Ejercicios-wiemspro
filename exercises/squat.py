@@ -1,11 +1,9 @@
 import cv2
 from constants import Constants as K
 from exercises.base import Exercise
-from utils.math_utils import calculate_angle
+from utils._utils import calculate_angle, valid_keypoints, valid_full_pose
 import numpy as np
 
-def valid_keypoints(confs, indices, threshold=0.3):
-    return np.all(confs[indices] > threshold)
 
 class SquatExercise(Exercise):
     """_summary_
@@ -13,12 +11,22 @@ class SquatExercise(Exercise):
     def __init__(self):
         """_summary_
         """
+        super().__init__()
         self.counter = 0
         self.stage = None
         self.latest_leg_angle = None
         self.latest_torso_angle = None
         self.leg_angle_pos = None
         self.torso_angle_pos = None
+    @property
+    def latest_angle(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        return self.latest_leg_angle
+    
     def update(self, keypoints, confs: float):
         """_summary_
         Args:
@@ -27,6 +35,8 @@ class SquatExercise(Exercise):
         Returns:
             _type_: _description_
         """
+        if not valid_full_pose(confs, threshold=0.3):
+            return None
         r_shoulder_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_SHOULDER']
         r_hip_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_HIP']
         r_knee_idx = K.YOLO_POSE_KEYPOINTS['RIGHT_KNEE']
