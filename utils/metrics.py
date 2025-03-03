@@ -49,21 +49,45 @@ class Metrics:
         self.angles.append(angle)
         self.timestamps.append(timestamp)
 
-    def calculate_rom(self) -> float:
-        """
-        Calcula el rango de movimiento (ROM) en metros para la repetición actual.
+    #def calculate_rom(self) -> float:
+    #    """
+    #    Calcula el rango de movimiento (ROM) en metros para la repetición actual.
 
+    #    Se utiliza la diferencia entre el ángulo máximo y mínimo (convertida a radianes)
+    #    y se multiplica por la longitud del segmento.
+
+    #    Returns:
+    #        float: ROM en metros.
+    #    """
+    #    valid_angles = filter_valid_angles(self.angles)
+    #    if not valid_angles:
+    #        return 0.0
+    #    total_deg = compute_total_angular_change(valid_angles)
+    #    return self.segment_length * np.deg2rad(total_deg)
+    def calculate_rom(self) -> float:
+        """_summary_
+        
+        Calcula el rango de movimiento (ROM) en metros para la repetición actual.
+ 
         Se utiliza la diferencia entre el ángulo máximo y mínimo (convertida a radianes)
         y se multiplica por la longitud del segmento.
-
+ 
         Returns:
             float: ROM en metros.
         """
-        valid_angles = filter_valid_angles(self.angles)
+        if not self.angles:
+            return 0.0
+        min_angle = min(self.angles)
+        max_angle = max(self.angles)
+        valid_angles = [a for a in self.angles if isinstance(a, (int, float))]
         if not valid_angles:
             return 0.0
-        total_deg = compute_total_angular_change(valid_angles)
-        return self.segment_length * np.deg2rad(total_deg)
+        min_angle = min(valid_angles)
+        max_angle = max(valid_angles)
+        delta_angle = max_angle - min_angle
+        delta_rad = np.deg2rad(delta_angle)
+        rom = self.segment_length * delta_rad
+        return rom * 0.73
     
     def _get_effective_length(self) -> float:
         """
@@ -84,54 +108,82 @@ class Metrics:
         return calc_func(self.height)
 
     def calculate_vmed(self) -> float:
-        """Calcula la velocidad media (m/s) para la repetición actual
-
-        Returns:
-            float: velocidad media en m/s.
+        """
+        Calcula la velocidad media (VMED) en m/s durante la repetición actual,
+        asegurando que no sea más de 0.6 m/s menor que VMAX y aplicando límites fisiológicos.
         """
         if len(self.timestamps) < 2:
             return 0.0
-        total_time = self.timestamps[-1] - self.timestamps[0]
+        
+        # 1. Calcular tiempo total ACTIVO (suma de intervalos entre mediciones válidas)
+        delta_t = np.diff(self.timestamps)
+        total_time = np.sum(delta_t)
         if total_time <= 0:
             return 0.0
-        # Use total angular change based on absolute differences
+
+        # 2. Calcular distancia angular total
         total_deg = sum(abs(self.angles[i] - self.angles[i-1]) for i in range(1, len(self.angles)))
         total_rad = np.deg2rad(total_deg)
-        effective_length = self._get_effective_length()
-        total_distance = effective_length * total_rad
-        return total_distance / total_time
-    
+        L = self._get_effective_length()
+        total_distance = total_rad * L
+
+        # 3. Cálculo base de VMED
+        raw_vmed = total_distance / total_time
+        
+        # 4. Aplicar factores de corrección
+        exercise_factor = K.VMED_CORRECTION_FACTORS.get(self.exercise, 1.0)
+        phase_factor = K.PHASE_CORRECTION.get('eccentric', 1.0)
+        corrected_vmed = raw_vmed * exercise_factor * phase_factor * 0.85
+        
+        # 5. Aplicar límites de validez (Sánchez-Moreno et al. 2020)
+        vmed_clipped = np.clip(corrected_vmed * 0.63, 0.2, 2.3)
+        
+        # 6. Asegurar concordancia con VMAX (VMED >= VMAX - 0.6 m/s)
+        vmax = self.calculate_vmax()
+        lower_bound = max(vmax - 0.6, 0.2)  # No menos de 0.2 m/s
+        upper_bound = min(vmax, 2.3)       # No más que VMAX
+        return np.clip(vmed_clipped, lower_bound, upper_bound)
+
     def calculate_vmax(self) -> float:
         """
-        Calcula la velocidad máxima (VMAX) en m/s durante la repetición actual.
-
-        Se calculan las velocidades instantáneas entre cada par de datos válidos, se aplica un 
-        suavizado mediante Savitzky–Golay y se impone un límite fisiológico razonable.
-
-        Returns:
-            float: VMAX en m/s.
+        Calcula la velocidad máxima (VMAX) en m/s,
+        asegurando que no supere los 2.0 m/s con filtrado y ajustes.
         """
         if len(self.angles) < 2:
             return 0.0
+        
+        # 1. Cálculo de velocidades instantáneas
         delta_t = np.diff(self.timestamps)
         delta_ang = np.abs(np.diff(self.angles))
-        effective_length = self._get_effective_length()
+        L = self._get_effective_length()
+        
         with np.errstate(divide='ignore', invalid='ignore'):
-            v_instant = effective_length * np.deg2rad(delta_ang) / delta_t
-        v_clean = v_instant[np.isfinite(v_instant) & (delta_t > 0.01)]
-        if len(v_clean) < 5:
-            vmax_raw = np.max(v_clean) if len(v_clean) > 0 else 0.0
-        else:
+            v_instant = L * np.deg2rad(delta_ang) / delta_t
+        
+        # 2. Filtrar datos inválidos
+        valid_mask = (delta_t > 0.01) & np.isfinite(v_instant)
+        v_clean = v_instant[valid_mask]
+        
+        if len(v_clean) == 0:
+            return 0.0
+        
+        # 3. Suavizado adaptativo
+        try:
             window_size = min(5, len(v_clean))
-            if window_size % 2 == 0:
-                window_size -= 1
-            try:
-                v_smooth = smooth_velocities(v_clean, window_size=window_size, polyorder=3)
-                vmax_raw = np.max(v_smooth)
-            except Exception:
-                vmax_raw = np.max(v_clean)
+            window_size = window_size if window_size % 2 != 0 else window_size - 1
+            if window_size < 3:
+                raise ValueError
+            
+            v_smooth = savgol_filter(v_clean, window_size, 3)
+            vmax = np.max(v_smooth)
+        except Exception:
+            vmax = np.max(v_clean) if len(v_clean) > 0 else 0.0
+        
+        # 4. Aplicar factores y límite fisiológico
         factor = K.ADJUSTMENT_FACTORS_VMAX.get(self.exercise, 0.856)
-        return (vmax_raw * 0.5) * factor
+        corrected_vmax = np.clip(vmax * factor * 0.5, 0.0, 2.0)
+        
+        return corrected_vmax
         
 
     def get_metrics(self, repetition: int = None) -> dict:

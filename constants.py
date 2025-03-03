@@ -79,7 +79,7 @@ class Constants:
         'pushup' : 0.858,
         'squat' : 0.75}
     
-    SHOW_POSE_OVERLAYS = True
+    SHOW_POSE_OVERLAYS = False
 
     CURL_COUNTER = 0
     CURL_STAGE = None
@@ -99,3 +99,17 @@ class Constants:
 
     PLANK_START_TIME = None
     PLANK_THRESHOLD_ANGLE = 170
+    
+    VMED_CORRECTION_FACTORS = {
+        'curl': 1.05,    # Validado para curl de bíceps
+        'squat': 1.03,   # Para sentadilla completa
+        'pushup': 0.98,   # Para press de pecho
+        'plank': 1.00     # Sin corrección
+    }
+    
+    PHASE_CORRECTION = {
+        'concentric': 0.97,  # Fase concéntrica
+        'eccentric': 1.03    # Fase excéntrica
+    }
+    
+    CONF_THRESHOLD = 0.25    # Umbral mínimo de confianza

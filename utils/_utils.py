@@ -83,7 +83,7 @@ def smooth_velocities(velocities, window_size=5, polyorder=3):
         window_size -= 1
     return savgol_filter(velocities, window_length=window_size, polyorder=polyorder)
 
-def valid_full_pose(confs, threshold=0.3, required_percentage = 0.8):
+def valid_full_pose(confs, threshold=0.3, required_percentage = 0.7):
     """
     Verifica que se hayan detectado todos los 17 keypoints con una confianza mínima.
 

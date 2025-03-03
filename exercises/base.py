@@ -28,7 +28,7 @@ class Exercise(ABC):
             numpy.ndarray: El frame actualizado con los overlays del ejercicio.
         """
         self.update(keypoints, confs)
-        self.draw(frame)
+        #self.draw(frame)
         return frame
 
     @abstractmethod
