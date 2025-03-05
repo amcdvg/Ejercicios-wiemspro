@@ -84,7 +84,7 @@ class Constants:
 
     CURL_COUNTER = 0
     CURL_STAGE = None
-    CURL_MAX_ANGLE = 160
+    CURL_MAX_ANGLE = 170
     CURL_MIN_ANGLE = 20
 
     SQUAT_COUNTER = 0
@@ -107,8 +107,8 @@ class Constants:
     EXERCISE_ANGLE_RANGES = {
     'curl': (40, 180),
     'pushup': (40, 180),
-    'squat': (90, 160),
-    'plank': (40, 180) 
+    'squat': (100, 180),
+    'plank': (40, 180)
     }
     VMED_CORRECTION_FACTORS = {
         'curl': 1.05,    # Validado para curl de bíceps

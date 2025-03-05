@@ -49,23 +49,28 @@ class Metrics:
         self.angles.append(angle)
         self.timestamps.append(timestamp)
 
-    #def calculate_rom(self) -> float:
-    #    """
-    #    Calcula el rango de movimiento (ROM) en metros para la repetición actual.
-
-    #    Se utiliza la diferencia entre el ángulo máximo y mínimo (convertida a radianes)
-    #    y se multiplica por la longitud del segmento.
-
-    #    Returns:
-    #        float: ROM en metros.
-    #    """
-    #    valid_angles = filter_valid_angles(self.angles)
-    #    if not valid_angles:
-    #        return 0.0
-    #    total_deg = compute_total_angular_change(valid_angles)
-    #    return self.segment_length * np.deg2rad(total_deg)
     def calculate_rom(self) -> float:
-        """_summary_
+        """
+        Calcula el rango de movimiento (ROM) en metros para la repetición actual.
+
+        Se utiliza la diferencia entre el ángulo máximo y mínimo (convertida a adianes)
+        y se multiplica por la longitud del segmento.
+
+        Returns:
+            float: ROM en metros.
+        """
+        valid_angles = filter_valid_angles(self.angles)
+        if not valid_angles:
+            return 0.0
+        min_angle = min(valid_angles)
+        max_angle = max(valid_angles)
+        delta_angle = max_angle - min_angle
+        delta_rad = np.deg2rad(delta_angle)
+        rom = self.segment_length * delta_rad
+        return rom * 0.73
+    """
+    def calculate_rom(self) -> float:
+        _summary_
         
         Calcula el rango de movimiento (ROM) en metros para la repetición actual.
  
@@ -74,7 +79,7 @@ class Metrics:
  
         Returns:
             float: ROM en metros.
-        """
+        
         if not self.angles:
             return 0.0
         min_angle = min(self.angles)
@@ -88,7 +93,7 @@ class Metrics:
         delta_rad = np.deg2rad(delta_angle)
         rom = self.segment_length * delta_rad
         return rom * 0.73
-    
+    """
     def _get_effective_length(self) -> float:
         """
         Calcula la longitud efectiva del segmento basado en proporciones antropométricas.

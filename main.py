@@ -31,7 +31,7 @@ def main():
 
     try:
         # Seleccionar el ejercicio (por ejemplo, 'curl')
-        exercise_type = exercises[1]
+        exercise_type = exercises[0]
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))
         if class_name_str is None:
             logger.error("Exercise not recognized.")
