@@ -53,6 +53,7 @@ class Constants:
             ]
         )
     }
+    
     REGRESSION_PARAMS = {
         'curl': {
             'male': {'A': -0.02, 'B': 0.16, 'C': 0.0005, 'D': 0.02},
@@ -100,6 +101,15 @@ class Constants:
     PLANK_START_TIME = None
     PLANK_THRESHOLD_ANGLE = 170
     
+    CAMERA_WIDTH = 1280
+    CAMERA_HEIGHT = 720
+
+    EXERCISE_ANGLE_RANGES = {
+    'curl': (40, 180),
+    'pushup': (40, 180),
+    'squat': (90, 160),
+    'plank': (40, 180) 
+    }
     VMED_CORRECTION_FACTORS = {
         'curl': 1.05,    # Validado para curl de bíceps
         'squat': 1.03,   # Para sentadilla completa
@@ -113,3 +123,4 @@ class Constants:
     }
     
     CONF_THRESHOLD = 0.25    # Umbral mínimo de confianza
+

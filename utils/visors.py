@@ -118,22 +118,35 @@ class MotionAnalyzer:
         Dibuja una barra de progreso vertical con porcentaje.
 
         Parámetros:
-            image (numpy.ndarray): Imagen donde se dibujará
-            progress (float): Progreso actual (0-1)
-            position (tuple): Posición (x, y) de la barra
-            bar_width (int): Ancho de la barra
-            bar_height (int): Alto total de la barra
-            color (tuple): Color de la barra en BGR
-            border_radius (int): Radio de los bordes redondeados
+            image (numpy.ndarray): Imagen donde se dibujará.
+            progress (float): Progreso actual (0-1).
+            position (tuple): Posición (x, y) de la barra.
+            bar_width (int): Ancho de la barra.
+            bar_height (int): Alto total de la barra.
+            color (tuple): Color de la barra en BGR.
+            border_radius (int): Radio de los bordes redondeados.
         """
         x, y = position
-        progress = 1 - progress
-        progress_height = int(bar_height * progress)
+        # Invertir el progreso para que 0 represente barra vacía y 1 barra llena.
+        inv_progress = 1 - progress
+        progress_height = int(bar_height * inv_progress)
         
+        # Dibujar el contorno base de la barra (siempre se dibuja)
         self.draw_rounded_rect(image, (x, y), bar_width, bar_height, (128, 0, 128), border_radius)
-        self.draw_rounded_rect(image, (x, y + bar_height - progress_height), bar_width, progress_height, color, min(border_radius, progress_height // 2))
         
-        percentage_text = f"{int(progress * 100) }%"
+        # Si progress_height es menor o igual a 0, forzamos un valor mínimo para evitar ejes de 0
+        if progress_height <= 0:
+            fill_y = y + bar_height - 1  # La parte inferior de la barra
+            fill_height = 1
+        else:
+            fill_y = y + bar_height - progress_height
+            fill_height = progress_height
+
+        # Dibujar la porción de la barra correspondiente al progreso actual
+        self.draw_rounded_rect(image, (x, fill_y), bar_width, fill_height, color, min(border_radius, fill_height // 2))
+        
+        # Calcular y dibujar el porcentaje
+        percentage_text = f"{int(inv_progress * 100)}%"
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.5
         color_text = (255, 255, 255)
@@ -143,8 +156,8 @@ class MotionAnalyzer:
         box_width = text_size[0] + 10
         box_height = text_size[1] + 10
         box_x = x + (bar_width - box_width) // 2
-        box_y = int(y + bar_height - (progress * bar_height) - box_height - 5 )#- 5
-    
+        box_y = int(y + bar_height - (inv_progress * bar_height) - box_height - 5)
+        
         if (box_x + box_width <= image.shape[1]) and (box_y + box_height <= image.shape[0]):
             self.draw_rounded_rect_T(image, (box_x, box_y), box_width, box_height, (75, 0, 130), 5)
             cv2.putText(image, percentage_text, (box_x + 5, box_y + box_height - 5), 

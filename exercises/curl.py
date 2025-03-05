@@ -7,27 +7,43 @@ import numpy as np
 import time
 
 class CurlExercise(Exercise):
+    """Ejercicio de Curl para bíceps utilizando la plantilla del patrón Template Method.
+
+    Esta clase implementa la lógica específica para el ejercicio de curl,
+    donde se mide el ángulo formado por el hombro, codo y muñeca.
+    Se utiliza para contar repeticiones a partir del cambio de fases:
+    - Estado "up": brazo extendido (ángulo cercano a CURL_MAX_ANGLE).
+    - Estado "down": brazo flexionado (ángulo menor a CURL_MIN_ANGLE).
+
+    Atributos:
+        counter (int): Contador de repeticiones completadas.
+        stage (str): Estado actual del ejercicio, ya sea "up" o "down".
+        latest_angle (float): Último ángulo calculado en la detección.
+        angle_pos (tuple): Posición (x, y) para dibujar el ángulo en el frame.
+        down_start_time (float): Momento en que se inicia la fase de descenso.
+        up_start_time (float): Momento en que se inicia la fase de ascenso.
     """
 
-    Args:
-        Exercise (_type_): _description_
-    """
     def __init__(self):
         super().__init__()
         self.counter = 0
-        self.stage = None
+        self.stage = "up"
         self.latest_angle = None
         self.angle_pos = None
 
     def update(self, keypoints, confs):
-        """_summary_
+        """Actualiza el estado del ejercicio de curl.
+
+        Se calcula el ángulo formado entre el hombro, codo y muñeca, y se actualiza el estado
+        ("up" o "down") según los umbrales definidos en las constantes. Se cuenta la repetición cuando
+        se completa el movimiento de flexión y extensión.
 
         Args:
-            keypoints (_type_): _description_
-            confs (_type_): _description_
+            keypoints (array-like): Lista o array con las coordenadas de los keypoints detectados.
+            confs (array-like): Lista o array con las confianzas asociadas a cada keypoint.
 
         Returns:
-            _type_: _description_
+            float or None: El ángulo calculado si los keypoints son válidos, de lo contrario None.
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
@@ -41,25 +57,31 @@ class CurlExercise(Exercise):
             angle = calculate_angle(shoulder, elbow, wrist)
             self.latest_angle = angle
             self.angle_pos = tuple(map(int, elbow))
-            if angle > K.CURL_MAX_ANGLE:
-                if self.stage == "up" and self.up_start_time is not None:
-                    self.up_time = time.time() - self.up_start_time
-                self.stage = "down"
+            if self.stage == "up" and angle < K.CURL_MIN_ANGLE:
+                # Se detecta que el brazo se flexiona (baja el ángulo)
                 self.down_start_time = time.time()
-            elif angle < K.CURL_MIN_ANGLE and self.stage == "down":
-                self.down_time = time.time() - self.down_start_time
-                self.stage = "up"
+                self.stage = "down"
+            elif self.stage == "down" and angle > K.CURL_MAX_ANGLE:
+                # Se detecta que el brazo se extiende nuevamente (ángulo alto)
+                self.down_time = time.time() - (self.down_start_time if self.down_start_time else time.time())
                 self.counter += 1
                 self.up_start_time = time.time()
+                self.stage = "up"
 
             return angle
         return None
     
     def draw(self, frame):
-        """_summary_
-        
+        """Dibuja la interfaz del ejercicio de curl en el frame.
+
+        Se dibujan un recuadro con el nombre del ejercicio, el contador de repeticiones, 
+        el estado actual y el ángulo detectado, con contorno para mejorar la legibilidad.
+
         Args:
-            frame (_type_): _description_
+            frame (numpy.ndarray): Imagen actual del frame.
+
+        Returns:
+            numpy.ndarray: El frame actualizado con los overlays del ejercicio.
         """
         cv2.rectangle(frame, (0, 0), (300, 73), (245, 117, 16), -1)
         cv2.putText(frame, 'CURL', (15, 12),

@@ -4,36 +4,58 @@ from exercises.base import Exercise
 from utils._utils import calculate_angle, valid_keypoints, valid_full_pose
 import numpy as np
 import time
-
 class SquatExercise(Exercise):
-    """_summary_
+    """Ejercicio de Squat (sentadilla) utilizando el patrón Template Method.
+    Esta clase implementa la lógica específica para el ejercicio de sentadilla,
+    donde se miden dos ángulos:
+      - El ángulo de la pierna, calculado entre el hombro, la cadera y la rodilla.
+      - El ángulo del torso, calculado entre el hombro, la cadera y la rodilla.
+    El ejercicio se modela en dos fases:
+    - Estado "down": cuando el usuario está en posición de sentadilla (ángulo de pierna bajo).
+    - Estado "up": cuando el usuario se levanta (ángulo de pierna alto).
+    Se cuenta una repetición cuando se detecta el cambio completo entre estas fases:
+      - Se inicia en "down" (posición agachada).
+      - Al levantarse y alcanzar un ángulo mayor a SQUAT_MAX_ANGLE, se cuenta una repetición y se cambia a "up".
+      - Luego, al bajar de nuevo y alcanzar un ángulo menor a SQUAT_MIN_ANGLE, se vuelve a cambiar a "down".
+    Atributos:
+        counter (int): Número de repeticiones completadas.
+        stage (str): Estado actual del ejercicio ("down" o "up").
+        latest_leg_angle (float): Último ángulo medido en la pierna.
+        latest_torso_angle (float): Último ángulo medido en el torso.
+        leg_angle_pos (tuple): Coordenadas (x, y) para dibujar el ángulo de la pierna.
+        torso_angle_pos (tuple): Coordenadas (x, y) para dibujar el ángulo del torso.
+        down_start_time (float): Tiempo de inicio de la fase de bajada.
+        up_start_time (float): Tiempo de inicio de la fase de subida.
     """
     def __init__(self):
         """_summary_
         """
         super().__init__()
         self.counter = 0
-        self.stage = None
+        self.stage = "down"
         self.latest_leg_angle = None
         self.latest_torso_angle = None
         self.leg_angle_pos = None
         self.torso_angle_pos = None
     @property
     def latest_angle(self):
-        """_summary_
-
+        """Devuelve el último ángulo relevante para el ejercicio (ángulo de la pierna).
         Returns:
-            _type_: _description_
+            float or None: El ángulo medido de la pierna, o None si aún no se ha calculado.
         """
         return self.latest_leg_angle
     
     def update(self, keypoints, confs: float):
-        """_summary_
+        """Actualiza el estado del ejercicio de sentadilla.
+        Se calcula el ángulo de la pierna (entre cadera, rodilla y tobillo) y el ángulo del torso (entre hombro, cadera y rodilla).
+        Luego, según el estado actual y los umbrales definidos en las constantes (SQUAT_MAX_ANGLE y SQUAT_MIN_ANGLE),
+        se detecta si el usuario se levanta o baja, actualizando el contador y los tiempos correspondientes.
         Args:
-            keypoints (_type_): Puntos de referencia de yolo pose estimation
-            confs (float): confianza de la detección 
+            keypoints (array-like): Puntos de referencia provenientes de la estimación de pose.
+            confs (array-like): Valores de confianza de la detección.
         Returns:
-            _type_: _description_
+            float or tuple: Devuelve el ángulo de la pierna si se actualiza correctamente;
+            de lo contrario, retorna (None, None).
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
@@ -52,25 +74,29 @@ class SquatExercise(Exercise):
             self.latest_torso_angle = torso_angle
             self.leg_angle_pos = tuple(map(int, r_knee))
             self.torso_angle_pos = tuple(map(int, r_hip))
-            if leg_angle < K.SQUAT_MIN_ANGLE and self.stage != "down": #and torso_angle < K.SQUAT_TORSO_MIN_ANGLE
-                self.stage = "down"
-                if self.stage == "up" and self.up_start_time is not None:
-                    self.up_time = time.time() - self.up_start_time
-                self.stage = "down"
-                self.down_start_time = time.time()
-            elif leg_angle > K.SQUAT_MAX_ANGLE and self.stage == "down":
-                self.down_time = time.time() - self.down_start_time
-                self.stage = "up"
+            if self.stage == "down" and leg_angle > K.SQUAT_MAX_ANGLE:
+                # Se detecta que el usuario se levanta desde la posición de sentadilla
+                self.down_time = time.time() - (self.down_start_time if self.down_start_time else time.time())
                 self.counter += 1
                 self.up_start_time = time.time()
-            return leg_angle#, torso_angle
+                self.stage = "up"
+            elif self.stage == "up" and leg_angle < K.SQUAT_MIN_ANGLE:
+                # Se detecta q
+                # ue el usuario baja desde la posición de pie
+                self.up_time = time.time() - (self.up_start_time if self.up_start_time else time.time())
+                self.down_start_time = time.time()
+                self.stage = "down"
+            return leg_angle
         return None, None
     
     def draw(self, frame):
-        """_summary_
-
+        """Dibuja la interfaz del ejercicio de curl en el frame.
+        Se dibujan un recuadro con el nombre del ejercicio, el contador de repeticiones, 
+        el estado actual y el ángulo detectado, con contorno para mejorar la legibilidad.
         Args:
-            frame (_type_): _description_
+            frame (numpy.ndarray): Imagen actual del frame.
+        Returns:
+            numpy.ndarray: El frame actualizado con los overlays del ejercicio.
         """
         cv2.rectangle(frame, (0, 0), (300, 73), (245, 117, 16), -1)
         cv2.putText(frame, 'SQUAT', (15, 12),
