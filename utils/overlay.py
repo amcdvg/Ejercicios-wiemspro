@@ -3,7 +3,7 @@ import time
 from utils.visors import MotionAnalyzer
 from constants import Constants as K
 
-def draw_overlays(annotated_frame, smooth_progress, exercise, rep_metrics, frame_width, frame_height, exercise_type):
+def draw_overlays(annotated_frame, progress, smooth_progress, exercise, rep_metrics, frame_width, frame_height, exercise_type):
     """
     Dibuja los overlays en el frame, ajustando dinámicamente los rangos de ángulos
     según el ejercicio seleccionado. El color se mantiene constante.
@@ -67,7 +67,8 @@ def draw_overlays(annotated_frame, smooth_progress, exercise, rep_metrics, frame
     elapsed_phase = time.time() - exercise.rep_start_time if exercise.rep_start_time is not None else 0.0
     
     # Dibujar la rueda de progreso utilizando el elapsed_phase acumulado
-    analyzer.draw_progress_wheel(annotated_frame, 1 - effective_smooth_progress,
+    wheel_progress = progress
+    analyzer.draw_progress_wheel(annotated_frame, 1 - wheel_progress,
                                  (frame_width - 100, frame_height - frame_height // 3 - 50),
                                  50, fixed_color, 10, elapsed_phase)
     

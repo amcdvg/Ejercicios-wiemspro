@@ -3,7 +3,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 from utils._utils import filter_valid_angles, compute_total_angular_change, smooth_velocities
 from utils.anthropometry import Anthopometry
-
+from datetime import datetime
 class Metrics:
     """
     Clase para calcular métricas (ROM, VMED, VMAX) a partir de la variación angular registrada 
@@ -37,7 +37,8 @@ class Metrics:
         self.segment_length = calc_func(self.height, self.age, self.gender)
         self.angles = []
         self.timestamps = []
-    
+        self.history = []
+
     def update(self, angle: float, timestamp: float):
         """
         Registra un nuevo ángulo y su correspondiente marca de tiempo.
@@ -192,41 +193,62 @@ class Metrics:
         
 
     def get_metrics(self, repetition: int = None) -> dict:
-        """
-        Retorna un diccionario con la información y las métricas calculadas:
-          - 'exercise': Tipo de ejercicio.
-          - 'height (m)': Estatura del sujeto en metros.
-          - 'gender': Género.
-          - 'age': Edad en años.
-          - 'leg_length (m)' o 'forearm_length (m)': Longitud estimada del segmento.
-          - 'min_angle (°)': Ángulo mínimo registrado.
-          - 'max_angle (°)': Ángulo máximo registrado.
-          - 'ROM (m)': Rango de movimiento en metros.
-          - 'VMED (m/s)': Velocidad media en m/s.
-          - 'VMAX (m/s)': Velocidad máxima en m/s.
-          - 'repetition': Número de repetición.
-        
+        """Retorna un diccionario con la información y las métricas calculadas para la repetición actual.
+
+        Los campos incluyen información del sujeto, del ejercicio y las métricas de la repetición,
+        organizados en un orden coherente.
+
         Args:
             repetition (int, optional): Número de repetición. Defaults a 0.
 
         Returns:
-            dict: Diccionario con las métricas y la información del ejercicio.
+            dict: Diccionario con las métricas e información del ejercicio, que incluye:
+                - start_datetime (str): Fecha y hora de inicio de la repetición (formato ISO).
+                - age (int): Edad del sujeto.
+                - gender (str): Género del sujeto.
+                - height (m) (float): Altura en metros.
+                - effective_length (m) (float): Longitud efectiva del segmento.
+                - min_angle (°) (float): Ángulo mínimo registrado.
+                - max_angle (°) (float): Ángulo máximo registrado.
+                - ROM (m) (float): Rango de movimiento en metros.
+                - VMED (m/s) (float): Velocidad media en m/s.
+                - VMAX (m/s) (float): Velocidad máxima en m/s.
+                - rep_time (float): Tiempo de repetición en segundos.
+                - repetition (int): Número de repetición.
+                - exercise (str): Tipo de ejercicio.
         """
-        min_angle = min(self.angles) if self.angles else None
-        max_angle = max(self.angles) if self.angles else None
-        type_length = 'leg_length (m)' if self.exercise == 'squat' else 'forearm_length (m)'
+        # Se determina la fecha y hora de inicio de la repetición
+        start_datetime = datetime.now().isoformat()
+
+        # Calcula el tiempo de repetición basado en la diferencia de timestamps, si existen.
+        if len(self.timestamps) < 2:
+            rep_time = 0.0
+        else:
+            delta_t = np.diff(self.timestamps)
+            rep_time = float(np.sum(delta_t))
+
+        # Obtener ángulos válidos (suponiendo que filter_valid_angles esté definida)
+        valid_angles = filter_valid_angles(self.angles)
+        min_angle = min(valid_angles) if valid_angles else None
+        max_angle = max(valid_angles) if valid_angles else None
+
+        # Obtener la longitud efectiva mediante la función correspondiente
+        effective_length = self._get_effective_length()
+
         metrics_dict = {
-            "exercise": self.exercise,
-            "height (m)": self.height,
-            "gender": self.gender,
+            "start_datetime": start_datetime,
             "age": self.age,
-            type_length: self.segment_length,
+            "gender": self.gender,
+            "height (m)": self.height,
+            "effective_length (m)": effective_length,
             "min_angle (°)": min_angle,
             "max_angle (°)": max_angle,
             "ROM (m)": self.calculate_rom(),
             "VMED (m/s)": self.calculate_vmed(),
             "VMAX (m/s)": self.calculate_vmax(),
-            "repetition": repetition if repetition is not None else 0
+            "rep_time": rep_time,
+            "repetition": repetition if repetition is not None else 0,
+            "exercise": self.exercise
         }
         return metrics_dict
 

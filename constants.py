@@ -18,7 +18,7 @@ class Constants:
         'RIGHT_KNEE': 14,
         'LEFT_ANKLE': 15,
         'RIGHT_ANKLE': 16}
-    
+
     EXERCISE_MAPPING = {
         'curl': (
             'CurlExercise', 
@@ -85,7 +85,7 @@ class Constants:
     CURL_COUNTER = 0
     CURL_STAGE = None
     CURL_MAX_ANGLE = 170
-    CURL_MIN_ANGLE = 20
+    CURL_MIN_ANGLE = 5
 
     SQUAT_COUNTER = 0
     SQUAT_STAGE = None
@@ -124,3 +124,17 @@ class Constants:
     
     CONF_THRESHOLD = 0.25    # Umbral mínimo de confianza
 
+    DEFAULT_COLUMNS_TO_EXPORT = [
+    "start_datetime",    # Fecha y hora de inicio del ejercicio (formato ISO)
+    "age",               # Edad del sujeto
+    "gender",            # Género
+    "height (m)",        # Estatura en metros
+    "effective_length (m)",# Para curl/pushup; para squat debería ser
+    "min_angle (°)",     # Ángulo mínimo registrado
+    "max_angle (°)",     # Ángulo máximo registrado
+    "ROM (m)",           # Rango de movimiento en metros
+    "VMED (m/s)",        # Velocidad media en m/s
+    "VMAX (m/s)",        # Velocidad máxima en m/s
+    "rep_time",          # Tiempo de repetición en segundos
+    "repetition",        # Número de repetición
+]

@@ -7,6 +7,7 @@ from constants import Constants as K
 from utils.metrics import Metrics
 from utils.visors import MotionAnalyzer
 from utils.overlay import draw_overlays
+from utils.csv_exporter import export_metrics
 from pose_estimator import PoseEstimator
 
 from exercises.curl import CurlExercise
@@ -31,12 +32,12 @@ def main():
 
     try:
         # Seleccionar el ejercicio (por ejemplo, 'curl')
-        exercise_type = exercises[0]
+        exercise_type = exercises[1]
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))
         if class_name_str is None:
             logger.error("Exercise not recognized.")
             return
-            
+
         exercise_class = class_mapping.get(class_name_str, None)
         if exercise_class is None:
             logger.error("Exercise class not found.")
@@ -56,12 +57,13 @@ def main():
         subject_gender = "male"
         subject_age = 22
         metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
-        
+
         last_counter = 0
         smooth_progress = 0.0
+        wheel_progress = 0.0
         min_angle = None
         max_angle = None
-        initialized_angles = False 
+        initialized_angles = False
         rep_metrics = {}
 
         while True:
@@ -79,7 +81,6 @@ def main():
                 cv2.putText(annotated_frame, "Error in pose detection", (50, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 data = None
-                
             logger.debug("Processing initial frame...")
             if data is not None:
                 try:
@@ -102,7 +103,7 @@ def main():
 
                             angle_range = K.EXERCISE_ANGLE_RANGES.get(exercise_type, (40, 180))
                             progress = MotionAnalyzer.normalize_value_bar(exercise.latest_angle, angle_range[0], angle_range[1])
-
+                            wheel_progress = 0.18 * progress + (1 - 0.18) * wheel_progress
                             smooth_progress = 0.115 * progress + (1 - 0.115) * smooth_progress
                     else:
                         smooth_progress = 0.0
@@ -110,6 +111,7 @@ def main():
                     if exercise.counter > last_counter:
                         rep_metrics = metrics_obj.get_metrics(exercise.counter)
                         logger.info("Repetition completed: %s", rep_metrics)
+                        export_metrics(rep_metrics)
                         last_counter = exercise.counter
                         metrics_obj.reset()
 
@@ -118,13 +120,10 @@ def main():
             else:
                 cv2.putText(annotated_frame, "Incomplete pose detection", (50, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-
             try:
-                
-                annotated_frame = draw_overlays(annotated_frame, smooth_progress, exercise, rep_metrics, frame_width, frame_height, exercise_type)
+                annotated_frame = draw_overlays(annotated_frame, wheel_progress, smooth_progress, exercise, rep_metrics, frame_width, frame_height, exercise_type)
             except Exception as e:
                 logger.exception("Error drawing overlay: %s", e)
-
             cv2.imshow('Virtual GYM', annotated_frame)
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
@@ -132,6 +131,7 @@ def main():
     except Exception as e:
         logger.exception("Main loop error: %s", e)
     finally:
+
         cap.release()
         cv2.destroyAllWindows()
         logger.info("Application terminated.")
