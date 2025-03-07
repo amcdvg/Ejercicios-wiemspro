@@ -1,10 +1,16 @@
 # Proyecto: Análisis de Movimiento en Ejercicios mediante Visión por Computadora
 
-El presente proyecto es para determinar la posición de de los puntos de la articulación de los antebrazos, en el presente código mediante los ejes de articulación de los barazos, se determiina el movimento para realizar el ejercicio de biceps. Además, tiene un asistente para contar el ejercicio, entregando ala usuario las metricas de ROM,  Velocidad máxima, velocidad media, tiempo del desarrollo de cada repetición y el porcentaje de trayectoria del ejercicio.
+AI Trainer – Virtual Gym utiliza un modelo de IA (YOLO) para la estimación de pose en tiempo real, calcula métricas biomecánicas (ROM, VMED, VMAX) y exporta los resultados para su seguimiento.
 
 
-## Modo de ejecución
-El presente desarrollo está solo diseñado para funcionamiento local. Por lo tanto se procede a clonar el proyecto
+## Características principales
+
+Características Principales
+Detección de pose mediante YOLO.
+Análisis de ejercicios con una clase base Exercise y subclases específicas (CurlExercise, SquatExercise, etc.).
+Cálculo de métricas biomecánicas (ROM, VMED, VMAX).
+Visualización de Overlays (barras de progreso, contadores) en tiempo real.
+Exportación de datos en formato CSV para un análisis posterior.
 #### Clonar el proyecto
 
 ```bash
@@ -36,7 +42,46 @@ Journal of Strength and Conditioning Research.
 Puedes descargar y consultar los artículos completos desde el siguiente enlace en Drive:
 [Documentos de Referencias](https://drive.google.com/drive/folders/17ASj1-250q9EJwoOWLLMcB6Cnxq1e9R8?usp=drive_link)
 
-Esta sección recopila las fuentes utilizadas para fundamentar los modelos de regresión (para la tibia y el antebrazo) y los rangos esperados de las métricas (ROM, VMED, VMAX). Puedes ajustar o ampliar la lista según se vayan integrando nuevos estudios o referencias relevantes. ¿Te parece adecuada esta sección para tu README?
+Esta sección recopila las fuentes utilizadas para fundamentar los modelos de regresión (para la tibia y el antebrazo) y los rangos esperados de las métricas (ROM, VMED, VMAX). Puedes ajustar o ampliar la lista según se vayan integrando nuevos estudios o referencias relevantes.
+
+## Diagrama de flujo 
+Aquí se describe el diagrama de flujo principal...
+
+![Diagrama de flujo](./docs/flowchart.png)
+
+## Estructura del proyecto
+
+```bash
+ai-trainer-virtual-gym/
+│
+├── docs/
+│   ├── flow_diagram.png
+│   ├── high_level_diagram.png
+│   ├── uml_classes.png
+│   └── Documentation_Complete.docx  # Documento Word con la documentación extensa
+│
+├── exercises/
+│   ├── base.py
+│   ├── curl.py
+│   ├── squat.py
+│   ├── pushup.py
+│   └── plank.py
+│
+├── utils/
+│   ├── _utils.py
+│   ├── drawing.py
+│   ├── visors.py
+│   ├── metrics.py
+│   ├── anthropometry.py
+│   └── csv_exporter.py
+│
+├── pose_estimator.py
+├── constants.py
+├── logging_config.py
+├── main.py
+├── requirements.txt
+└── README.md
+```
 
 ## Dependencias 
 Una vez que se haya clonado el proyecto en su equipo local, se procederá a instalar las dependencia, por tanto se creará un entorno vistual para ello
@@ -98,5 +143,5 @@ Una vez que tenga activado el entorno virtual, se ejecutará el  siguiente coman
 Desdde una terminal, teniendo el entorno virtual activado, se procederá a ejecutar el siguiente comando
 
 ```bash
-  python video.py
+  python main.py
 ```
