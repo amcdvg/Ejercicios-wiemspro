@@ -1,6 +1,7 @@
 import numpy as np
 import logging
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, medfilt
+import cv2
 
 _last_detected_percentage = None
 
@@ -83,6 +84,34 @@ def smooth_velocities(velocities, window_size=5, polyorder=3):
         window_size -= 1
     return savgol_filter(velocities, window_length=window_size, polyorder=polyorder)
 
+
+def smooth_angles(angles, window_length=5, polyorder=2):
+    """
+    Suaviza la secuencia de ángulos usando el filtro de Savitzky-Golay.
+    
+    Args:
+        angles (list[float]): Lista de ángulos en grados.
+        window_length (int): Longitud de la ventana (debe ser impar y menor o igual al número de puntos).
+        polyorder (int): Orden del polinomio para el filtro.
+        
+    Returns:
+        numpy.ndarray: Arreglo de ángulos suavizados.
+    """
+    # Asegurarse de que la ventana sea impar y no mayor que la longitud de la lista
+    if len(angles) < window_length:
+        window_length = len(angles) if len(angles) % 2 != 0 else len(angles)-1
+    if window_length < 3:
+        # Si no tenemos suficientes puntos, devolvemos la señal original
+        return np.array(angles)
+    
+    try:
+        angles_array = np.array(angles, dtype=float)
+        smoothed = savgol_filter(angles_array, window_length=window_length, polyorder=polyorder)
+        return smoothed
+    except Exception as e:
+        # En caso de error, devolvemos la lista original
+        return np.array(angles)
+
 def valid_full_pose(confs, threshold=0.3, required_percentage = 0.7):
     """
     Verifica que se hayan detectado todos los 17 keypoints con una confianza mínima.
@@ -120,3 +149,48 @@ def valid_full_pose(confs, threshold=0.3, required_percentage = 0.7):
     _last_detected_percentage = current_percentage
 
     return current_percentage >= required_percentage
+
+def median_filter_angles(angles:list, kernel_size: int = 3):
+    """
+    Aplica un filtro de mediana a una lista de ángulos.
+    
+    Args:
+        angles (list): Lista de ángulos en grados
+        kernel_size (int, optional): Tamaño de la ventana para el filtro de mediana. Debe ser número impar. Por defecto es 3
+    
+    Returns:
+        list: Lista de ángulos filtrada.
+    """
+
+    if len(angles) < kernel_size:
+        return angles
+    
+    return medfilt(angles, kernel_size=kernel_size).tolist()
+
+def resize_frame(frame, target_width=1280, target_height=720):
+    # Obtener dimensiones originales
+    h, w = frame.shape[:2]
+    # Calcular la relación de aspecto
+    aspect_ratio = w / h
+    target_ratio = target_width / target_height
+
+    if aspect_ratio > target_ratio:
+        # La imagen es más ancha que la ventana objetivo: ajustar el ancho
+        new_w = target_width
+        new_h = int(target_width / aspect_ratio)
+    else:
+        # La imagen es más alta que la ventana objetivo: ajustar la altura
+        new_h = target_height
+        new_w = int(target_height * aspect_ratio)
+
+    # Redimensionar el frame
+    resized_frame = cv2.resize(frame, (new_w, new_h))
+    
+    # Crear un lienzo negro con la resolución objetivo
+    canvas = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+    # Calcular posiciones para centrar el frame redimensionado
+    start_y = (target_height - new_h) // 2
+    start_x = (target_width - new_w) // 2
+    # Pegar el frame redimensionado en el lienzo
+    canvas[start_y:start_y+new_h, start_x:start_x+new_w] = resized_frame
+    return canvas

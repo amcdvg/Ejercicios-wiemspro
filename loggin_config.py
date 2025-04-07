@@ -1,7 +1,9 @@
 import logging
-import sys 
+import sys
 
 def setup_logging():
+    """_summary_
+    """
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     

@@ -6,7 +6,12 @@ from constants import Constants as K
 class PoseEstimator:
     """_summary_
     """
-    def __init__(self, model_path='models/yolo11n-pose.pt'):
+    def __init__(self, model_path='models/yolo11x-pose.pt'):
+        """_summary_
+
+        Args:
+            model_path (str, optional): _description_. Defaults to 'models/yolo11n-pose.pt'.
+        """
         self.model = YOLO(model_path)
         
     def estimate(self, frame, relevant_indices=None):
@@ -24,11 +29,11 @@ class PoseEstimator:
             annotated_frame = results[0].plot()
         else:
             annotated_frame = frame.copy()
-        
+
         # Verificar si se detectaron keypoints y si contienen datos
         if (results[0].keypoints is None or 
             not hasattr(results[0].keypoints, "xy") or 
-            len(results[0].keypoints.xy) == 0 or 
+            len(results[0].keypoints.xy) == 0 or
             results[0].keypoints.conf is None or 
             len(results[0].keypoints.conf) == 0):
             return None, annotated_frame

@@ -16,7 +16,7 @@ class Exercise(ABC):
         self.up_time = None  
         self.down_start_time = None  
         self.up_start_time = None
-    def process(self, keypoints, confs, frame: np.ndarray)-> np.ndarray:
+    def process(self, keypoints, confs, frame, current_time):
         """
         Ejecuta el flujo de procesamiento del ejercicio.
 
@@ -32,8 +32,8 @@ class Exercise(ABC):
         Returns:
             numpy.ndarray: El frame actualizado con los overlays del ejercicio.
         """
-        self.update(keypoints, confs)
-        #self.draw(frame)
+        self.update(keypoints, confs, current_time)
+        self.draw(frame)
         return frame
 
     @abstractmethod
