@@ -14,7 +14,7 @@ class DeadliftExercise(Exercise):
     """
     def __init__(self, side: str):
         super().__init__()
-        self.side = side.lower()
+        self.side = side.upper()
         self.counter = 0
         self.stage = "up"  # Inicia en posición de pie (up)
         self.rep_finished = False  # Para evitar conteos inmediatos tras finalizar una rep
@@ -39,7 +39,7 @@ class DeadliftExercise(Exercise):
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
-        side_str = self.side.upper()
+        side_str = self.side
         shoulder_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_SHOULDER']
         hip_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_HIP']
         knee_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_KNEE']
