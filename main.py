@@ -58,7 +58,7 @@ def main(input_source):
     logger = logging.getLogger('Main')
 
     try:
-        exercise_type = exercises[9]
+        exercise_type = exercises[3]
         logger.info("Exercise type: %s", exercise_type)
 
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))

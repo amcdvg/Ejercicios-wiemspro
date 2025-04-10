@@ -185,7 +185,11 @@ class Constants:
 
     DEADLIFT_MIN_TORSO_ANGLE = 150
     DEADLIFT_MAX_TORSO_ANGLE = 170
-    
+    DEADLIFT_MIN_VERTICAL_DISPLACEMENT = 340  # Umbral para considerar posición "up" (muñeca arriba)
+    DEADLIFT_MAX_VERTICAL_DISPLACEMENT = 320  # Umbral para considerar posición "down" (muñeca abajo)
+    # En constants.py
+    DEADLIFT_MIN_DISPLACEMENT = 0.15  # 15 cm
+    DEADLIFT_MAX_DISPLACEMENT = 0.50  # 50 cm
     REVERSEFLY_MIN_ANGLE = 120
     REVERSEFLY_MAX_ANGLE = 140
 
@@ -216,7 +220,8 @@ class Constants:
     'swing' : (120, 0),
     'renegade_row': (110, 170),
     'bench_dips': (90, 180),
-    'overhead_triceps':(70, 180)
+    'overhead_triceps':(70, 180), 
+    'deadlift': (100, 400)
     }
       # Ya definidos:
     VMED_CORRECTION_FACTORS = {
