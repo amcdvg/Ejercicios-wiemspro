@@ -43,10 +43,9 @@ class_mapping = {
 #K.SHOW_POSE_OVERLAYS = True
 subject_height = 1.84
 subject_gender = "male"
-subject_age = 21
+subject_age = 26
 #selected_side = "left"
 selected_side = "right"
-
 
 def main(input_source):
     """_summary_
@@ -58,7 +57,7 @@ def main(input_source):
     logger = logging.getLogger('Main')
 
     try:
-        exercise_type = exercises[9]
+        exercise_type = exercises[3]
         logger.info("Exercise type: %s", exercise_type)
 
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))

@@ -275,12 +275,11 @@ class Constants:
         'plank': 0.48
     }
 
-    # NUEVO: para sustituir el factor de ROM (antes 0.91)
     ROM_BASE_FACTORS = {
         'curl': 2.37,
         'squat': 0.93,
         'pushup': 1.797,
-        'deadlift': 0.59,
+        'deadlift': 0.8,
         'reverse_fly': 10.146,
         'swing': 2.72,
         'renegade_row': 0.8,
@@ -294,7 +293,7 @@ class Constants:
         'curl': 1.95,
         'squat': 0.825,
         'pushup':0.756,
-        'deadlift': 0.37,
+        'deadlift': 0.689,
         'reverse_fly': 3.32,
         'swing': 1.16,
         'renegade_row': 0.79,
