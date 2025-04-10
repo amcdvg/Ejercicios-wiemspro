@@ -41,7 +41,7 @@ class_mapping = {
     'ExtensionTricepsExercise':ExtensionTricepsExercise}
 
 #K.SHOW_POSE_OVERLAYS = True
-subject_height = 1.68
+subject_height = 1.84
 subject_gender = "male"
 subject_age = 21
 #selected_side = "left"

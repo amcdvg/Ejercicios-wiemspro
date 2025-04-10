@@ -147,7 +147,6 @@ class Constants:
         'default': {'A': 0.43, 'B': 0.0}
     }
 }
-    
     EFFECTIVE_LENGTH_FUNCTIONS = {
     'curl': lambda h: 0.95 * (0.146 * h),
     'squat': lambda h: 0.85 * ((0.245 * h) + (0.246 * h)),
@@ -270,7 +269,7 @@ class Constants:
         'reverse_fly': 2.25,
         'swing': 1,
         'renegade_row': 0.38,
-        'rear_lunge': 0.49,
+        'rear_lunge': 0.247,
         'bench_dips': 0.58,
         'overhead_triceps': 0.59,
         'plank': 0.48
@@ -285,7 +284,7 @@ class Constants:
         'reverse_fly': 10.146,
         'swing': 2.72,
         'renegade_row': 0.8,
-        'rear_lunge': 0.48,
+        'rear_lunge': 1.001,
         'bench_dips': 1.01,
         'overhead_triceps': 1.31,
         'plank': 0.91
@@ -299,7 +298,7 @@ class Constants:
         'reverse_fly': 3.32,
         'swing': 1.16,
         'renegade_row': 0.79,
-        'rear_lunge': 0.23,
+        'rear_lunge': 0.434,
         'bench_dips': 0.71,
         'overhead_triceps': 2.51,
         'plank': 0.62
