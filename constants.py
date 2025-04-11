@@ -185,8 +185,8 @@ class Constants:
 
     DEADLIFT_MIN_TORSO_ANGLE = 150
     DEADLIFT_MAX_TORSO_ANGLE = 170
-    DEADLIFT_MIN_VERTICAL_DISPLACEMENT = 340  # Umbral para considerar posición "up" (muñeca arriba)
-    DEADLIFT_MAX_VERTICAL_DISPLACEMENT = 320  # Umbral para considerar posición "down" (muñeca abajo)
+    DEADLIFT_MIN_VERTICAL_DISPLACEMENT = 0.83  # Umbral para considerar posición "up" (muñeca arriba)
+    DEADLIFT_MAX_VERTICAL_DISPLACEMENT = 0.81  # Umbral para considerar posición "down" (muñeca abajo)
     # En constants.py
     DEADLIFT_MIN_DISPLACEMENT = 0.15  # 15 cm
     DEADLIFT_MAX_DISPLACEMENT = 0.50  # 50 cm
@@ -270,7 +270,7 @@ class Constants:
         'curl': 1.4,
         'squat': 0.51,
         'pushup': 0.554,
-        'deadlift': 0.35,
+        'deadlift': 1.155,
         'reverse_fly': 2.25,
         'swing': 1,
         'renegade_row': 0.38,
@@ -285,7 +285,7 @@ class Constants:
         'curl': 2.37,
         'squat': 0.93,
         'pushup': 1.797,
-        'deadlift': 0.59,
+        'deadlift': 0.007264,
         'reverse_fly': 10.146,
         'swing': 2.72,
         'renegade_row': 0.8,
@@ -299,7 +299,7 @@ class Constants:
         'curl': 1.95,
         'squat': 0.825,
         'pushup':0.756,
-        'deadlift': 0.37,
+        'deadlift': 1.8945,
         'reverse_fly': 3.32,
         'swing': 1.16,
         'renegade_row': 0.79,
@@ -317,18 +317,18 @@ class Constants:
     CONF_THRESHOLD = 0.25    # Umbral mínimo de confianza
 
     DEFAULT_COLUMNS_TO_EXPORT = [
-    "start_datetime",    # Fecha y hora de inicio del ejercicio (formato ISO)
-    "age",               # Edad del sujeto
-    "gender",            # Género
-    "height (m)",        # Estatura en metros
+    "start_datetime",
+    "age",
+    "gender",
+    "height (m)",
     "effective_length (m)",
-    "min_angle (°)",     # Ángulo mínimo registrado
-    "max_angle (°)",     # Ángulo máximo registrado
-    "ROM (cm)",           # Rango de movimiento en metros
-    "VMED (m/s)",        # Velocidad media en m/s
-    "VMAX (m/s)",        # Velocidad máxima en m/s
-    "rep_time",          # Tiempo de repetición en segundos
-    "repetition",        # Número de repetición
+    "min_displacement (m)",  # Reemplaza "min_angle (°)"
+    "max_displacement (m)",  # Reemplaza "max_angle (°)"
+    "ROM (cm)",
+    "VMED (m/s)",
+    "VMAX (m/s)",
+    "rep_time",
+    "repetition",
 ]
     TORSO_LOWER_BOUND = 25.0  # Inclinación mínima recomendada (en grados)
     TORSO_UPPER_BOUND = 45.0  # Inclinación máxima recomendada (en grados)

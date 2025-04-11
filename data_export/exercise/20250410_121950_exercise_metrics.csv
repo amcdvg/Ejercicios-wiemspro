@@ -1,0 +1,2 @@
+start_datetime,age,gender,height (m),effective_length (m),min_angle (°),max_angle (°),ROM (cm),VMED (m/s),VMAX (m/s),rep_time,repetition
+,,,,,,,48.21,0.23,0.48,1.4,1

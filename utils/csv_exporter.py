@@ -37,7 +37,7 @@ def export_metrics(metrics, output_file=None):
             continue
         value = metrics.get(field, '')
         if isinstance(value, float):
-            value = round(value, 3)
+            value = round(value, 5)
         final_metrics[field] = value
 
     file_exists = os.path.isfile(output_file)

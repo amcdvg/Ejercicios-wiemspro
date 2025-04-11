@@ -73,7 +73,7 @@ def main(input_source):
             logger.error("Exercise class not found.")
             return
 
-        exercise = exercise_class(selected_side)
+        exercise = exercise_class(selected_side, user_height=subject_height)
         pose_estimator = PoseEstimator()
 
         try:
@@ -92,7 +92,7 @@ def main(input_source):
             time_sync = TimeSync(is_camera=True)
         else:
             fps = cap.get(cv2.CAP_PROP_FPS)
-            if fps < 1: 
+            if fps < 1:
                 fps = 30
             time_sync = TimeSync(is_camera=False, fps=fps)
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -133,6 +133,10 @@ def main(input_source):
                 keypoints, confs = data
                 # Se pasa current_time a process(), que lo propaga a update()
                 exercise.process(keypoints, confs, frame=annotated_frame, current_time=current_time)
+                #Actualizar métricas solo después de calibrar
+                if isinstance(exercise, DeadliftExercise) and exercise.get_pixel_scale() is not None:
+                    if not hasattr(metrics_obj, 'pixel_scale'):
+                        metrics_obj.pixel_scale = exercise.get_pixel_scale()  # Pasar escala
                 # Actualizamos las métricas solo cuando la repetición está en curso:
                 # (Es decir, mientras se encuentre en la fase "down", que indica que la rep se inició)
                 if exercise.latest_angle is not None and hasattr(exercise, 'rep_start_time') and exercise.rep_start_time is not None:
@@ -148,6 +152,7 @@ def main(input_source):
             if exercise.counter > last_counter:
                 rep_metrics = metrics_obj.get_metrics(exercise.counter)
                 logger.info("Repetition completed: %s", rep_metrics)
+                rep_metrics["exercise"] = exercise_type
                 export_metrics(rep_metrics)
                 last_counter = exercise.counter
                 metrics_obj.reset()  # Reiniciamos para la siguiente repetición

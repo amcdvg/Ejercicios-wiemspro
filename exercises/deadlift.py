@@ -5,111 +5,136 @@ from utils._utils import valid_keypoints, valid_full_pose
 import numpy as np
 import time
 
-
 class DeadliftExercise(Exercise):
     """
-    Clase que implementa el ejercicio de peso muerto utilizando el desplazamiento relativo
-    entre la muñeca y el tobillo para detectar fases y repeticiones, en lugar de ángulos articulares.
-    
-    Args:
-        Exercise: Clase base para ejercicios
+    Implementa el ejercicio de peso muerto utilizando el desplazamiento relativo
+    entre la muñeca y el tobillo para detectar fases y contar repeticiones.
+
+    Calibración:
+      - Se estima el factor de conversión (pixel_scale) usando la altura del bounding box
+        de la persona, calculada como la diferencia en Y entre el punto superior y el inferior
+        de los keypoints.
+      - Se utiliza el desplazamiento (wrist-ankle) obtenido en los primeros frames para calcular
+        un umbral dinámico (disp_threshold) en metros, restándole 0.07 m al valor máximo observado.
     """
-    def __init__(self, side: str):
+    def __init__(self, side: str, user_height: float):
         super().__init__()
         self.side = side.lower()
         self.counter = 0
-        self.stage = "up"  # Inicia en posición de pie (up)
-        self.rep_finished = False  # Para evitar conteos inmediatos tras finalizar una rep
-        self.displacement_history = []  # Para suavizar el desplazamiento relativo
-        self.rep_start_time = None  # Tiempo relativo de inicio de la rep
-        self._latest_displacement = None  # Último desplazamiento relativo (muñeca - tobillo)
-        self.wrist_pos = None  # Posición de la muñeca para dibujar
-        self.ankle_pos = None  # Posición del tobillo para dibujar
-        self.scale_factor = None
-        self.calibration_frames = []
-        self.calibrated = False
+        self.stage = "up"         # Inicialmente en "up" (posición de pie)
+        self.rep_finished = False # Flag para evitar conteos dobles
+        self.displacement_history = []  # Para suavizar el valor medido
+        self.rep_start_time = None
+        self._latest_displacement = 0
+        self.wrist_pos = None
+        self.ankle_pos = None
+
+        # Calibración basada en bounding box y desplazamientos de muñeca-ankle
+        self.pixel_scale = None   # Factor de conversión de píxeles a metros
+        self.calib_disp = []      # Historial de desplazamientos (wrist-ankle) durante la calibración
+        self.disp_threshold = None  # Umbral dinámico en metros
+
+        self.user_height = user_height  # Altura real del sujeto en metros
 
     @property
     def latest_angle(self):
-        # Mantenemos esta propiedad para compatibilidad con el código existente
-        # que espera un ángulo, pero ahora devuelve un valor de desplazamiento normalizado
+        # Se mantiene por compatibilidad, pero ahora es el desplazamiento suavizado
         return self._latest_displacement
-    
+
+    def get_pixel_scale(self):
+        return self.pixel_scale
+
     def update(self, keypoints, confs: float, current_time):
         """
-        Actualiza el estado del ejercicio basado en el desplazamiento relativo entre
-        la muñeca y el tobillo.
-
-        Args:
-            keypoints: Puntos clave detectados del cuerpo
-            confs (float): Valores de confianza para los puntos detectados
-            current_time: Tiempo actual relativo
-
-        Returns:
-            float or None: Valor del desplazamiento relativo si se detectó correctamente
+        Actualiza el estado del ejercicio basado en el desplazamiento entre muñeca y tobillo,
+        administra la fase (up/down) y el conteo de repeticiones.
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
-        
+
         side_str = self.side.upper()
         wrist_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_WRIST']
         ankle_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_ANKLE']
 
+        # ----------------------------
+        # Calibrar el pixel_scale usando el bounding box
+        # ----------------------------
+        if self.pixel_scale is None:
+            y_coords = keypoints[:, 1]
+            bbox_top = np.min(y_coords)
+            bbox_bottom = np.max(y_coords)
+            bbox_height_px = bbox_bottom - bbox_top
+            if bbox_height_px > 0:
+                self.pixel_scale = self.user_height / bbox_height_px
+                print(f"Calibrated using bbox: 1px = {self.pixel_scale:.4f} m")
+
+        # ----------------------------
+        # Calibrar el umbral dinámico (disp_threshold) acumulando desplazamientos
+        # ----------------------------
+        if self.disp_threshold is None:
+            if valid_keypoints(confs, [wrist_idx, ankle_idx]):
+                wrist = keypoints[wrist_idx]
+                ankle = keypoints[ankle_idx]
+                disp_px = abs(ankle[1] - wrist[1])
+                self.calib_disp.append(disp_px)
+                # Imprimir para ver que se acumulan los valores
+                print(f"Calibration displacement: {disp_px:.2f} px (acumulados: {len(self.calib_disp)})")
+                if len(self.calib_disp) >= 5:
+                    max_disp_px = max(self.calib_disp)
+                    self.disp_threshold = (max_disp_px * self.pixel_scale) - 0.05
+                    print(f"Dynamic threshold calculated: {self.disp_threshold:.4f} m")
+            return None  # Mientras no se tenga el threshold, se retorna None
+
+        # ----------------------------
+        # CÁLCULO DEL DESPLAZAMIENTO EN METROS
+        # ----------------------------
         if valid_keypoints(confs, [wrist_idx, ankle_idx]):
             wrist = keypoints[wrist_idx]
             ankle = keypoints[ankle_idx]
-            
-            # Calculamos el desplazamiento vertical relativo (coordenada Y)
-            # Nota: en coordenadas de imagen, Y aumenta hacia abajo
-            raw_displacement =   ankle[1] - wrist[1]
-            
-            # Guardamos el desplazamiento en el historial para suavizarlo
-            self.displacement_history.append(raw_displacement)
-            
-            # Suavizamos el desplazamiento con una ventana deslizante (mediana)
+            displacement_px = abs(ankle[1] - wrist[1])
+            displacement_m = displacement_px * self.pixel_scale
+
+            # Acumular en un historial para suavizar (ventana de 5 muestras)
+            self.displacement_history.append(displacement_m)
             if len(self.displacement_history) >= 5:
                 smoothed_displacement = np.median(self.displacement_history[-5:])
             else:
-                smoothed_displacement = raw_displacement
-                
+                smoothed_displacement = displacement_m
+
             self._latest_displacement = smoothed_displacement
-            print(f"[Deadlift] displacement {smoothed_displacement:.2f}")
+            print(f"[Deadlift] displacement {smoothed_displacement*100:.3f}")
             self.wrist_pos = tuple(map(int, wrist))
             self.ankle_pos = tuple(map(int, ankle))
 
-            # Lógica para evitar contar repeticiones inmediatamente después de terminar una
-            if self.rep_finished:
-                # Usamos un umbral relativo para determinar cuando podemos iniciar una nueva repetición
-                # Valores positivos significa que la muñeca está por debajo del tobillo (posición inicial)
-                if smoothed_displacement > K.DEADLIFT_MIN_VERTICAL_DISPLACEMENT + 10:
+            # RESETEAR rep_finished: cuando se está en "up" y el desplazamiento baja al 95% del threshold
+            if self.stage == "up" and self.rep_finished:
+                reset_threshold = self.disp_threshold * 0.95
+                if smoothed_displacement < reset_threshold:
                     self.rep_finished = False
-                return smoothed_displacement
-                
-            # Transición de "up" a "down": Se inicia la repetición cuando la muñeca
-            # desciende por debajo de cierto umbral relativo al tobillo
-            if self.stage == "up" and smoothed_displacement < K.DEADLIFT_MAX_VERTICAL_DISPLACEMENT:
+
+            # TRANSICIÓN DE ESTADOS:
+            # 1. De "up" a "down": iniciar rep cuando el desplazamiento baja por debajo del threshold
+            if self.stage == "up" and not self.rep_finished and smoothed_displacement < self.disp_threshold:
                 self.rep_start_time = current_time
                 self.stage = "down"
-            
-            # Transición de "down" a "up": Se completa la repetición cuando la muñeca
-            # vuelve a ascender por encima de cierto umbral relativo al tobillo
-            elif self.stage == "down" and smoothed_displacement > K.DEADLIFT_MIN_VERTICAL_DISPLACEMENT:
+            # 2. De "down" a "up": finalizar rep cuando el desplazamiento sube por encima del threshold + offset 0.02 m
+            elif self.stage == "down" and smoothed_displacement > self.disp_threshold + 0.02:
                 self.current_rep_time = current_time - self.rep_start_time
-                self.rep_start_time = None  # Reiniciamos para la siguiente rep
+                self.rep_start_time = None
                 self.counter += 1
                 self.stage = "up"
                 self.rep_finished = True
                 print(f"[Deadlift] Transition to UP: displacement {smoothed_displacement:.2f}, rep count: {self.counter}, rep time: {self.current_rep_time:.2f}")
                 self.displacement_history.clear()
-                
+
             return smoothed_displacement
         return None
+
 
     def draw(self, frame):
         """
         Dibuja los overlays para el ejercicio de Deadlift en el frame.
-        Muestra un recuadro con el nombre del ejercicio, el contador de repeticiones,
-        el estado actual y el desplazamiento relativo detectado.
+        (El siguiente bloque está comentado; descoméntalo para ver la visualización).
         """
         """
         cv2.rectangle(frame, (0, 0), (300, 73), (245, 117, 16), -1)
@@ -123,14 +148,10 @@ class DeadliftExercise(Exercise):
         cv2.putText(frame, stage_text,
                     (90, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2, cv2.LINE_AA)
         
-        # Dibujamos el desplazamiento relativo entre muñeca y tobillo
         if self._latest_displacement is not None and self.wrist_pos is not None and self.ankle_pos is not None:
-            # Dibuja una línea entre la muñeca y el tobillo
             cv2.line(frame, self.wrist_pos, self.ankle_pos, (0, 255, 0), 2)
-            
-            # Muestra el valor del desplazamiento
             midpoint = ((self.wrist_pos[0] + self.ankle_pos[0]) // 2, 
-                         (self.wrist_pos[1] + self.ankle_pos[1]) // 2)
+                        (self.wrist_pos[1] + self.ankle_pos[1]) // 2)
             cv2.putText(frame, f"Desp: {self._latest_displacement:.1f}", midpoint,
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 5, cv2.LINE_AA)
             cv2.putText(frame, f"Desp: {self._latest_displacement:.1f}", midpoint,
