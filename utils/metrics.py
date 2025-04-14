@@ -1,7 +1,6 @@
 from constants import Constants as K
 import numpy as np
 from scipy.signal import savgol_filter
-from utils._utils import smooth_angles
 from datetime import datetime
 import time
 
@@ -11,18 +10,19 @@ class Metrics:
         self.height = height
         self.gender = gender.lower()
         self.age = age
-        self.pixel_scale = None  # Recibirá el factor de escala desde DeadliftExercise
+        self.pixel_scale = None
         
-        # Configuración específica para deadlift
         if self.exercise == 'deadlift':
-            self.segment_length = self.height  # Usamos la altura completa como referencia
+            self.segment_length = self.height 
         else:
-            # Mantenemos regresiones antropométricas para otros ejercicios
             self._init_anthropometric_functions()
         
-        self.angles = []  # Almacenará desplazamientos en metros para deadlift
+        self.angles = []  
         self.timestamps = []
         self.start_time = None
+
+        self.savgol_window = 5
+        self.savgol_polyorder = 3
 
     def _init_anthropometric_functions(self):
         """Inicializa funciones antropométricas para ejercicios que no sean deadlift."""
@@ -42,68 +42,91 @@ class Metrics:
     def calculate_rom(self) -> float:
         if not self.angles:
             return 0.0
-        
-        smoothed = savgol_filter(self.angles, 3, 2)  # Filtro de suavizado
-        
+
+        # Para ROM usamos los ángulos sin filtrar ya que la diferencia max-min es buena.
         if self.exercise == 'deadlift':
-            # ROM directo en metros (ya escalado desde el ejercicio)
             rom_meters = max(self.angles) - min(self.angles)
-            return rom_meters * 100  # Convertir a cm
+            return rom_meters * 100 * K.ROM_BASE_FACTORS.get(self.exercise, 0.91)  # Convertir a cm
         else:
             # Lógica original para otros ejercicios
+            smoothed = savgol_filter(self.angles, 3, 2)
             delta_rad = np.deg2rad(max(smoothed) - min(smoothed))
-            return self.segment_length * delta_rad #* K.ROM_BASE_FACTORS.get(self.exercise, 0.91)
+            return self.segment_length * delta_rad
 
     def calculate_vmed(self) -> float:
         if len(self.timestamps) < 2:
             return 0.0
-        
-        smoothed = savgol_filter(self.angles, 3, 2)
-        delta_t = np.diff(self.timestamps)
-        total_time = np.sum(delta_t)
-        
+
         if self.exercise == 'deadlift':
-            total_distance = np.sum(np.abs(np.diff(self.angles)))  # En metros
-            raw_vmed = total_distance / total_time
+            # Identificar el índice del mínimo para aislar la fase concéntrica
+            i_min = np.argmin(self.angles)
+            relevant_angles = np.array(self.angles[i_min:])
+            relevant_timestamps = np.array(self.timestamps[i_min:])
+            if len(relevant_timestamps) < 2:
+                return 0.0
+            # Calcular velocidades instantáneas (diferencia de ángulos / delta_t)
+            dt = np.diff(relevant_timestamps)
+            inst_vel = np.abs(np.diff(relevant_angles)) / dt  # m/s
+            # Aplicar un filtro Savitzky–Golay a la serie de velocidades, si hay suficientes datos:
+            if len(inst_vel) >= self.savgol_window:
+                filtered_inst_vel = savgol_filter(inst_vel, window_length=self.savgol_window, polyorder=self.savgol_polyorder)
+            else:
+                filtered_inst_vel = inst_vel
+            # La velocidad media se puede estimar como la media de las velocidades filtradas:
+            raw_vmed = np.mean(filtered_inst_vel)
         else:
-            total_rad = np.deg2rad(np.sum(np.abs(np.diff(smoothed))))
-            raw_vmed = (self.segment_length * total_rad) / total_time
-        
+            # Para otros ejercicios, se sigue la lógica original usando la señal suavizada sobre ángulos
+            smoothed = savgol_filter(self.angles, 3, 2)
+            delta_t = np.diff(self.timestamps)
+            total_time = np.sum(delta_t)
+            delta_rad = np.deg2rad(np.sum(np.abs(np.diff(smoothed))))
+            raw_vmed = (self.segment_length * delta_rad) / total_time
+
         return self._apply_vmed_corrections(raw_vmed)
+
     def calculate_vmax(self) -> float:
         if len(self.angles) < 2:
             return 0.0
-        
-        smoothed = savgol_filter(self.angles, 3, 2)
-        delta_t = np.diff(self.timestamps)
-        
+
         if self.exercise == 'deadlift':
-            velocities = np.abs(np.diff(self.angles)) / delta_t  # m/s
+            i_min = np.argmin(self.angles)
+            relevant_angles = np.array(self.angles[i_min:])
+            relevant_timestamps = np.array(self.timestamps[i_min:])
+            if len(relevant_angles) < 2:
+                return 0.0
+            dt = np.diff(relevant_timestamps)
+            inst_vel = np.abs(np.diff(relevant_angles)) / dt
+            if len(inst_vel) >= self.savgol_window:
+                filtered_inst_vel = savgol_filter(inst_vel, window_length=self.savgol_window, polyorder=self.savgol_polyorder)
+            else:
+                filtered_inst_vel = inst_vel
+            raw_vmax = np.max(filtered_inst_vel)
         else:
+            smoothed = savgol_filter(self.angles, 3, 2)
+            delta_t = np.diff(self.timestamps)
             delta_rad = np.deg2rad(np.abs(np.diff(smoothed)))
             velocities = (self.segment_length * delta_rad) / delta_t
-        
-        valid_velocities = velocities[np.isfinite(velocities) & (delta_t > 0.01)]
-        return self._apply_vmax_corrections(np.max(valid_velocities)) if valid_velocities.size > 0 else 0.0
+            raw_vmax = np.max(velocities)
+
+        return self._apply_vmax_corrections(raw_vmax)
 
     def _apply_vmed_corrections(self, raw_vmed: float) -> float:
         factors = [
-            K.VMED_CORRECTION_FACTORS.get(self.exercise, 1.0),
+            #K.VMED_CORRECTION_FACTORS.get(self.exercise, 1.0),
             K.VMED_BASE_FACTORS.get(self.exercise, 0.85),
-            K.VMED_FINAL_FACTORS.get(self.exercise, 0.62)
+            #K.VMED_FINAL_FACTORS.get(self.exercise, 0.62)
         ]
-        return raw_vmed #* np.prod(factors)
+        return raw_vmed  * np.prod(factors)
 
     def _apply_vmax_corrections(self, raw_vmax: float) -> float:
         factors = [
-            K.ADJUSTMENT_FACTORS_VMAX.get(self.exercise, 0.856),
+            #K.ADJUSTMENT_FACTORS_VMAX.get(self.exercise, 0.856),
             K.VMAX_BASE_FACTORS.get(self.exercise, 0.48)
         ]
-        return raw_vmax #* np.prod(factors)
+        return raw_vmax  * np.prod(factors)
 
     def get_metrics(self, repetition: int = None) -> dict:
         rep_time = self.timestamps[-1] - self.timestamps[0] if len(self.timestamps) >= 2 else 0.0
-        # Renombrar las claves para mantener consistencia:
         metrics = {
             "ROM (cm)": round(self.calculate_rom(), 5),
             "VMED (m/s)": round(self.calculate_vmed(), 5),
@@ -112,12 +135,12 @@ class Metrics:
             "repetition": repetition or 0
         }
         if self.exercise == 'deadlift':
-            # Renombramos usando los nombres de columna originales
             metrics.update({
                 "min_angle (°)": round(min(self.angles), 5),
                 "max_angle (°)": round(max(self.angles), 5)
             })
         return metrics
+
     def reset(self):
         self.angles = []
         self.timestamps = []

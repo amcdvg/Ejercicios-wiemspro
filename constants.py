@@ -18,10 +18,10 @@ class Constants:
         'RIGHT_KNEE': 14,
         'LEFT_ANKLE': 15,
         'RIGHT_ANKLE': 16}
-    
+
     EXERCISE_MAPPING = {
     'curl': (
-        'CurlExercise', 
+        'CurlExercise',
         [
             '{side}_SHOULDER',
             '{side}_ELBOW',
@@ -101,7 +101,7 @@ class Constants:
     )
 }
 
-    
+
     REGRESSION_PARAMS = {
     'curl': {
         'male': {'A': 0.5, 'B': 0.15, 'C': -0.01, 'D': 0.0},
@@ -164,7 +164,7 @@ class Constants:
         'curl' : 0.858,
         'pushup' : 0.858,
         'squat' : 0.75}
-    
+
     SHOW_POSE_OVERLAYS = True
 
     CURL_COUNTER = 0
@@ -177,7 +177,7 @@ class Constants:
     SQUAT_MAX_ANGLE = 170
     SQUAT_MIN_ANGLE = 160
     SQUAT_TORSO_MIN_ANGLE = 170
-    
+
     PUSHUP_COUNTER = 0
     PUSHUP_STAGE = None
     PUSHUP_MAX_ANGLE = 152
@@ -223,7 +223,7 @@ class Constants:
     'overhead_triceps':(70, 180), 
     'deadlift': (100, 400)
     }
-      # Ya definidos:
+    # Ya definidos:
     VMED_CORRECTION_FACTORS = {
         'curl': 1.05,
         'squat': 1.03,
@@ -242,7 +242,7 @@ class Constants:
         'curl': 0.85,
         'squat': 0.87,
         'pushup': 0.84,
-        'deadlift': 0.90,
+        'deadlift': 0.97,
         'reverse_fly': 0.85,
         'swing': 0.85,
         'renegade_row': 0.85,
@@ -270,7 +270,7 @@ class Constants:
         'curl': 1.4,
         'squat': 0.51,
         'pushup': 0.554,
-        'deadlift': 1.155,
+        'deadlift': 1.08,
         'reverse_fly': 2.25,
         'swing': 1,
         'renegade_row': 0.38,
@@ -285,7 +285,7 @@ class Constants:
         'curl': 2.37,
         'squat': 0.93,
         'pushup': 1.797,
-        'deadlift': 0.007264,
+        'deadlift': 1.349,
         'reverse_fly': 10.146,
         'swing': 2.72,
         'renegade_row': 0.8,
@@ -299,7 +299,7 @@ class Constants:
         'curl': 1.95,
         'squat': 0.825,
         'pushup':0.756,
-        'deadlift': 1.8945,
+        'deadlift': 1.233,
         'reverse_fly': 3.32,
         'swing': 1.16,
         'renegade_row': 0.79,

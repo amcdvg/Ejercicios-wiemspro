@@ -74,7 +74,7 @@ def main(input_source):
             return
 
         exercise = exercise_class(selected_side, user_height=subject_height)
-        pose_estimator = PoseEstimator()
+        pose_estimator = PoseEstimator(model_path='models/yolo11m-pose.pt')
 
         try:
             source = int(input_source)
