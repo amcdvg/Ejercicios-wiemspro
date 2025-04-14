@@ -43,7 +43,6 @@ class Metrics:
         if not self.angles:
             return 0.0
 
-        # Para ROM usamos los ángulos sin filtrar ya que la diferencia max-min es buena.
         if self.exercise == 'deadlift':
             rom_meters = max(self.angles) - min(self.angles)
             return rom_meters * 100 * K.ROM_BASE_FACTORS.get(self.exercise, 0.91)  # Convertir a cm
@@ -58,21 +57,19 @@ class Metrics:
             return 0.0
 
         if self.exercise == 'deadlift':
-            # Identificar el índice del mínimo para aislar la fase concéntrica
             i_min = np.argmin(self.angles)
             relevant_angles = np.array(self.angles[i_min:])
             relevant_timestamps = np.array(self.timestamps[i_min:])
             if len(relevant_timestamps) < 2:
                 return 0.0
-            # Calcular velocidades instantáneas (diferencia de ángulos / delta_t)
             dt = np.diff(relevant_timestamps)
             inst_vel = np.abs(np.diff(relevant_angles)) / dt  # m/s
-            # Aplicar un filtro Savitzky–Golay a la serie de velocidades, si hay suficientes datos:
+
             if len(inst_vel) >= self.savgol_window:
                 filtered_inst_vel = savgol_filter(inst_vel, window_length=self.savgol_window, polyorder=self.savgol_polyorder)
             else:
                 filtered_inst_vel = inst_vel
-            # La velocidad media se puede estimar como la media de las velocidades filtradas:
+
             raw_vmed = np.mean(filtered_inst_vel)
         else:
             # Para otros ejercicios, se sigue la lógica original usando la señal suavizada sobre ángulos
@@ -82,7 +79,7 @@ class Metrics:
             delta_rad = np.deg2rad(np.sum(np.abs(np.diff(smoothed))))
             raw_vmed = (self.segment_length * delta_rad) / total_time
 
-        return self._apply_vmed_corrections(raw_vmed)
+        return self._apply_vmed_corrections(raw_vmed)*1.27
 
     def calculate_vmax(self) -> float:
         if len(self.angles) < 2:

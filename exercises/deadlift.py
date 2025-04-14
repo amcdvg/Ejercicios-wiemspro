@@ -34,11 +34,9 @@ class DeadliftExercise(Exercise):
 
         self.user_height = user_height
 
-        # Para almacenar la historia de desplazamientos (para aplicar Savitzky-Golay)
         self.displacement_history = []
 
-        # Parámetros para el Savitzky-Golay:
-        self.savgol_window = 3     # Debe ser un entero impar
+        self.savgol_window = 3
         self.savgol_polyorder = 2
 
     @property
@@ -61,9 +59,6 @@ class DeadliftExercise(Exercise):
         wrist_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_WRIST']
         ankle_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_ANKLE']
 
-        # ----------------------------
-        # Calibrar el pixel_scale usando el bounding box
-        # ----------------------------
         if self.pixel_scale is None:
             y_coords = keypoints[:, 1]
             bbox_top = np.min(y_coords)
@@ -73,9 +68,6 @@ class DeadliftExercise(Exercise):
                 self.pixel_scale = self.user_height / bbox_height_px
                 print(f"Calibrated using bbox: 1px = {self.pixel_scale:.4f} m")
 
-        # ----------------------------
-        # Calibrar el umbral dinámico acumulando desplazamientos
-        # ----------------------------
         if self.disp_threshold is None:
             if valid_keypoints(confs, [wrist_idx, ankle_idx]):
                 wrist = keypoints[wrist_idx]
@@ -87,23 +79,17 @@ class DeadliftExercise(Exercise):
                     max_disp_px = max(self.calib_disp)
                     self.disp_threshold = (max_disp_px * self.pixel_scale) - 0.04
                     print(f"Dynamic threshold calculated: {self.disp_threshold:.4f} m")
-            return None  # Mientras no se tenga el threshold, se retorna None
+            return None
 
-        # ----------------------------
-        # Medición actual: obtener desplazamiento en metros a partir de keypoints
-        # ----------------------------
         if valid_keypoints(confs, [wrist_idx, ankle_idx]):
             wrist = keypoints[wrist_idx]
             ankle = keypoints[ankle_idx]
             displacement_px = abs(ankle[1] - wrist[1])
             displacement_m = displacement_px * self.pixel_scale
 
-            # Acumular la medición en la historia para el filtrado
             self.displacement_history.append(displacement_m)
 
-            # Aplicar Savitzky-Golay si tenemos suficientes datos en la historia:
             if len(self.displacement_history) >= self.savgol_window:
-                # Asegurarse de que la ventana sea impar y <= a la longitud del vector
                 window = self.savgol_window if self.savgol_window <= len(self.displacement_history) else len(self.displacement_history) | 1
                 smoothed_displacement = savgol_filter(self.displacement_history, window_length=window, polyorder=self.savgol_polyorder)[-1]
             else:
@@ -114,16 +100,11 @@ class DeadliftExercise(Exercise):
             self.wrist_pos = tuple(map(int, wrist))
             self.ankle_pos = tuple(map(int, ankle))
 
-            # ----------------------------
-            # Lógica para detección de repeticiones
-            # ----------------------------
-            # Resetear rep_finished si en estado "up" y el desplazamiento baja al 95% del threshold
             if self.stage == "up" and self.rep_finished:
                 reset_threshold = self.disp_threshold * 0.95
                 if smoothed_displacement < reset_threshold:
                     self.rep_finished = False
 
-            # Transición de "up" a "down": iniciar la repetición cuando el desplazamiento baja por debajo del threshold
             if self.stage == "up" and not self.rep_finished and smoothed_displacement < self.disp_threshold:
                 self.rep_start_time = current_time
                 self.stage = "down"
