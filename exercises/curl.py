@@ -1,18 +1,49 @@
 import cv2
+import numpy as np
+import time
+
 from constants import Constants as K
 from exercises.base import Exercise
 from utils._utils import calculate_angle, valid_keypoints, valid_full_pose
-import numpy as np
-import time
+
+
 class CurlExercise(Exercise):
     """Ejercicio de Curl para bíceps utilizando el patrón Template Method.
 
-    Se mide el ángulo formado por el hombro, codo y muñeca. Se cuentan repeticiones
-    al detectar la transición:
-      - De "up" a "down": cuando el ángulo cae por debajo de CURL_MIN_ANGLE.
-      - De "down" a "up": cuando el ángulo sube por encima de CURL_MAX_ANGLE.
+    Se mide el ángulo formado por el hombro, codo y muñeca y se cuentan las repeticiones
+    detectando la transición de estado. En concreto:
+    
+      - Se inicia la repetición (transición de "up" a "down") cuando el ángulo cae por debajo
+        de `CURL_MIN_ANGLE`.
+      - Se finaliza la repetición (transición de "down" a "up") cuando el ángulo supera 
+        `CURL_MAX_ANGLE` y se verifica que la diferencia entre el ángulo inicial y el final
+        (delta_angle) sea superior a 15°.
+      
+    La señal de ángulo se suaviza mediante la mediana de las últimas 5 muestras para evitar
+    ruido puntual. Durante la fase de cooldown (cuando se ha finalizado la repetición) la
+    actualización de la medición se congela hasta que el ángulo disminuya lo suficiente.
+    
+    Attributes:
+        side (str): Lado a utilizar ('left' o 'right').
+        counter (int): Número de repeticiones completadas.
+        stage (str): Estado actual del ejercicio ("up" o "down").
+        _latest_angle (float): Último ángulo suavizado calculado.
+        angle_pos (tuple): Coordenadas (x, y) del keypoint usado para la visualización (en este caso, el codo).
+        angles_history (list): Historial de ángulos brutos para aplicar suavizado.
+        rep_lock (bool): Flag utilizado para evitar contar repeticiones múltiples (no se usa en este código).
+        down_start_time (float): Tiempo de inicio de la fase "down" (no se usa en este fragmento).
+        up_start_time (float): Tiempo de inicio de la fase "up" (no se usa en este fragmento).
+        rep_finished (bool): Indica que la repetición ha finalizado (cooldown activo).
+        rep_start_time (float): Tiempo de inicio de la repetición.
+        rep_end_angle (float): Valor de ángulo final de la repetición (para calcular delta).
     """
+
     def __init__(self, side: str):
+        """Inicializa una instancia del ejercicio de Curl.
+
+        Args:
+            side (str): Lado a utilizar ('left' o 'right').
+        """
         super().__init__()
         self.side = side.lower()
         self.counter = 0
@@ -23,34 +54,34 @@ class CurlExercise(Exercise):
         self.rep_lock = False  
         self.down_start_time = None
         self.up_start_time = None
-        # Flag para indicar que la rep ya se completó y se debe congelar la medición.
         self.rep_finished = False
         self.rep_start_time = None
 
     @property
     def latest_angle(self):
+        """float: Devuelve el último ángulo suavizado calculado."""
         return self._latest_angle
 
     def update(self, keypoints, confs: float, current_time):
-        """
-        Actualiza el estado del ejercicio de curl.
-        Se calcula el ángulo formado por hombro, codo y muñeca y se suaviza usando la mediana
-        de las últimas muestras.
-        La lógica es la siguiente:
-        - En estado "up": si el ángulo cae por debajo de CURL_MIN_ANGLE y no se está en cooldown,
-            se inicia la repetición (transición a "down") y se guarda el ángulo inicial.
-        - En estado "down": si el ángulo sube por encima de CURL_MAX_ANGLE, se considera que
-            la repetición terminó; se calcula el delta entre el ángulo final y el inicial y, si es mayor a 15°,
-            se cuenta la repetición, se guarda el tiempo de la repetición en last_rep_time, se activa el cooldown
-            (rep_finished) y se limpia el historial.
-        - Mientras se esté en cooldown (rep_finished == True), no se actualizará el temporizador
-            hasta que se detecte que el ángulo ha bajado al menos 15° por debajo del ángulo final de la rep anterior.
-        
+        """Actualiza el estado del ejercicio de Curl a partir de los keypoints detectados.
+
+        Se valida la pose, se calcula el ángulo formado por hombro, codo y muñeca, y se
+        suaviza la señal utilizando la mediana de las últimas 5 muestras. Además, se gestiona
+        la transición entre estados "up" y "down" para contabilizar repeticiones.
+
+        Args:
+            keypoints (ndarray): Array con las coordenadas de los keypoints detectados.
+            confs (float): Valor de confianza asociado a la detección.
+            current_time (float): Tiempo (en segundos) actual, utilizado para medir la duración
+                de la repetición.
+
         Returns:
-            float or None: El ángulo suavizado calculado o None si no se detecta una pose válida.
+            float or None: El ángulo suavizado calculado si la pose es válida, o None si no se cumple
+            el umbral de confianza.
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
+
         side_str = self.side.upper()
         shoulder_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_SHOULDER']
         elbow_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_ELBOW']
@@ -60,9 +91,11 @@ class CurlExercise(Exercise):
             shoulder = keypoints[shoulder_idx]
             elbow = keypoints[elbow_idx]
             wrist = keypoints[wrist_idx]
+
+            # Calcular el ángulo entre hombro, codo y muñeca
             raw_angle = calculate_angle(shoulder, elbow, wrist)
             self.angles_history.append(raw_angle)
-            # Suavizamos usando la mediana de las últimas 5 muestras
+            # Suavizar el ángulo usando la mediana de las últimas 5 muestras
             if len(self.angles_history) >= 5:
                 smoothed_angle = np.median(self.angles_history[-5:])
             else:
@@ -71,18 +104,16 @@ class CurlExercise(Exercise):
             self._latest_angle = smoothed_angle
             self.angle_pos = tuple(map(int, elbow))
 
-            # Si estamos en cooldown (rep_finished activado), no se inicia una nueva repetición
-            # hasta que el ángulo baje de forma significativa respecto al rep_end_angle.
+            # Durante el cooldown no se actualiza la repetición hasta que el ángulo caiga 15° por debajo
+            # del ángulo final de la repetición anterior.
             if self.rep_finished:
                 if smoothed_angle < self.rep_end_angle - 15:
-                    # Se reinicia el cooldown y se permite iniciar una nueva rep.
                     self.rep_finished = False
                     print(f"[Curl][DEBUG] Cooldown finalizado: ángulo bajó de {self.rep_end_angle:.2f} a {smoothed_angle:.2f}")
                 else:
-                    # Mientras no se baje lo suficiente, no se actualiza el tiempo.
                     return smoothed_angle
 
-            # Estado "up": se inicia la repetición si se cumple la condición
+            # Estado "up": iniciar la repetición si el ángulo cae por debajo del umbral mínimo
             if self.stage == "up" and smoothed_angle < K.CURL_MIN_ANGLE:
                 self.rep_start_time = current_time  
                 self.rep_start_angle = smoothed_angle
@@ -90,7 +121,7 @@ class CurlExercise(Exercise):
                 print(f"[Curl] Transition to DOWN: angle {smoothed_angle:.2f}")
                 print(f"[Curl][DEBUG] Rep iniciada con ángulo = {self.rep_start_angle:.2f}")
 
-            # Estado "down": durante la repetición, se muestra el ángulo y se detecta el final
+            # Estado "down": registrar la rep cuando el ángulo sube por encima del umbral máximo
             elif self.stage == "down":
                 print(f"[Curl][DEBUG] En rep: ángulo actual = {smoothed_angle:.2f}")
                 if smoothed_angle > K.CURL_MAX_ANGLE:
@@ -110,9 +141,18 @@ class CurlExercise(Exercise):
             return smoothed_angle
         return None
 
-
     def draw(self, frame):
-        """Dibuja la interfaz del ejercicio de curl en el frame."""
+        """Dibuja la interfaz de usuario y la visualización del ejercicio en el frame.
+
+        Se dibuja un rectángulo de fondo, el nombre del ejercicio, el conteo de repeticiones,
+        el estado actual y se muestra el valor del ángulo suavizado en la posición del codo.
+
+        Args:
+            frame (ndarray): Imagen del frame donde se dibujarán los elementos.
+
+        Returns:
+            ndarray: El frame modificado con los overlays.
+        """
         cv2.rectangle(frame, (0, 0), (300, 73), (245, 117, 16), -1)
         cv2.putText(frame, 'CURL', (15, 12),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)

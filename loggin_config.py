@@ -2,7 +2,13 @@ import logging
 import sys
 
 def setup_logging():
-    """_summary_
+    """Configura la salida de logs tanto en consola como en archivo.
+
+    Se establece el nivel de log a DEBUG para el logger raíz. Se define un formateador
+    con la hora, el nivel del mensaje, el nombre del logger y el mensaje (seguido de un salto de línea).
+    Se crea un handler para la consola (stdout) que muestra mensajes de nivel INFO o superior,
+    y otro handler para archivo ("app.log") que almacena todos los mensajes a nivel DEBUG o superior.
+    Finalmente, se agrega ambos handlers al logger raíz y se imprime un mensaje de confirmación.
     """
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)

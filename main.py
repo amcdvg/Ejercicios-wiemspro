@@ -25,6 +25,7 @@ from exercises.rear_lunge import RearLugeExercise
 from exercises.bench_dips import BenchDipsExercise
 from exercises.overhead_triceps import ExtensionTricepsExercise
 
+# Lista de ejercicios disponibles y mapeo de ejercicio a sus clases
 exercises = ['squat', 'curl', 'pushup', 'deadlift', 'reverse_fly', 'overhead_triceps', 'bench_dips', 'rear_lunge', 'renegade_row', 'swing']
 exercise_mapping = K.EXERCISE_MAPPING
 
@@ -34,30 +35,43 @@ class_mapping = {
     'PushupExercise': PushupExercise,
     'DeadliftExercise': DeadliftExercise,
     'ReverseFlyExercise': ReverseFlyExercise,
-    'SwingExercise':SwingExercise,
-    'RenegadeRowExercise':RenegadeRowExercise,
-    'RearLugeExercise':RearLugeExercise,
+    'SwingExercise': SwingExercise,
+    'RenegadeRowExercise': RenegadeRowExercise,
+    'RearLugeExercise': RearLugeExercise,
     'BenchDipsExercise': BenchDipsExercise,
-    'ExtensionTricepsExercise':ExtensionTricepsExercise}
+    'ExtensionTricepsExercise': ExtensionTricepsExercise
+}
 
-#K.SHOW_POSE_OVERLAYS = True
-subject_height = 1.84
+# Configuración de parámetros del sujeto
+subject_height = 1.84  # Altura en metros
 subject_gender = "male"
 subject_age = 21
-#selected_side = "left"
+# Selección del lado a analizar (puede ser 'left' o 'right')
 selected_side = "right"
 
 
 def main(input_source):
-    """_summary_
+    """Ejecuta el analizador de ejercicios Virtual Gym.
+
+    Este método configura el logger, instancia la clase de ejercicio correspondiente a partir
+    de la cadena de ejercicios y su mapeo, inicializa el estimador de poses y la sincronización 
+    del tiempo, y procesa cada frame del video o la cámara. Durante el procesamiento se actualizan
+    las métricas mediante el objeto Metrics y se exportan los resultados a un archivo CSV. Además,
+    se dibujan overlays sobre el video para visualizar el progreso del ejercicio, la repetición actual 
+    y otros datos de interés.
 
     Args:
-        input_source (_type_): _description_
+        input_source (str): Fuente de video. Puede ser un número (como '0') que indica la cámara o 
+            la ruta a un archivo de video.
+
+    Returns:
+        None
     """
     setup_logging()
     logger = logging.getLogger('Main')
 
     try:
+        # Seleccionar el ejercicio según el índice (en este caso, 'deadlift')
         exercise_type = exercises[3]
         logger.info("Exercise type: %s", exercise_type)
 
@@ -66,6 +80,7 @@ def main(input_source):
             logger.error("Exercise not recognized.")
             return
 
+        # Formatear los índices relevantes de keypoints en función del lado seleccionado
         relevant_indices = [K.YOLO_POSE_KEYPOINTS[tpl.format(side=selected_side.upper())] for tpl in relevant_indices]
 
         exercise_class = class_mapping.get(class_name_str, None)
@@ -73,10 +88,13 @@ def main(input_source):
             logger.error("Exercise class not found.")
             return
 
+        # Crear instancia del ejercicio (en este caso, DeadliftExercise)
         exercise = exercise_class(selected_side, user_height=subject_height)
-        pose_estimator = PoseEstimator(model_path='models/yolo11m-pose.pt')
+        # Inicializar el estimador de pose con el modelo especificado.
+        pose_estimator = PoseEstimator(model_path='models/yolo11n-pose.pt')
 
         try:
+            # Intentar convertir la fuente de entrada a entero (para cámara) o dejarla como ruta.
             source = int(input_source)
         except ValueError:
             source = input_source
@@ -85,6 +103,7 @@ def main(input_source):
         if not cap.isOpened():
             logger.error("Error opening video source: %s", input_source)
             return
+
         is_camera = isinstance(source, int)
         if is_camera:
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, K.CAMERA_WIDTH)
@@ -105,6 +124,7 @@ def main(input_source):
         if is_camera:
             out = None
 
+        # Instancia del objeto Metrics para calcular las métricas según el ejercicio.
         metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
 
         last_counter = 0
@@ -113,16 +133,19 @@ def main(input_source):
         rep_metrics = {}
         initialized_angles = False
 
+        # Ciclo principal: Procesamiento de cada frame
         while True:
             ret, frame = cap.read()
             if not ret or frame is None:
                 logger.info("video ended or read frame error")
                 break
+
             frame_height, frame_width, _ = frame.shape
-            # Se obtiene current_time (tiempo relativo)
+            # Obtener el tiempo relativo (sincronizado) del frame actual
             current_time = time_sync.get_current_time()
 
             try:
+                # Estimar pose y obtener el frame anotado
                 data, annotated_frame = pose_estimator.estimate(frame, relevant_indices)
             except Exception as e:
                 logger.exception("Pose estimation error: %s", e)
@@ -131,38 +154,43 @@ def main(input_source):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
             if data is not None:
                 keypoints, confs = data
-                # Se pasa current_time a process(), que lo propaga a update()
+                # Se procesa la pose actualizada, propagando el current_time al método process().
                 exercise.process(keypoints, confs, frame=annotated_frame, current_time=current_time)
-                #Actualizar métricas solo después de calibrar
+                # Actualizar la escala (pixel_scale) en el objeto Metrics si se ha calculado en el ejercicio.
                 if isinstance(exercise, DeadliftExercise) and exercise.get_pixel_scale() is not None:
                     if not hasattr(metrics_obj, 'pixel_scale'):
-                        metrics_obj.pixel_scale = exercise.get_pixel_scale()  # Pasar escala
-                # Actualizamos las métricas solo cuando la repetición está en curso:
-                # (Es decir, mientras se encuentre en la fase "down", que indica que la rep se inició)
+                        metrics_obj.pixel_scale = exercise.get_pixel_scale()  # Transferir la escala
+                # Actualizar las métricas sólo si la repetición está activa (fase "down")
                 if exercise.latest_angle is not None and hasattr(exercise, 'rep_start_time') and exercise.rep_start_time is not None:
                     metrics_obj.update(exercise.latest_angle, current_time)
-                # Actualizamos la barra de progreso (esto puede hacerse siempre)
+                # Calcular el progreso basado en el ángulo del ejercicio
                 angle_range = K.EXERCISE_ANGLE_RANGES.get(exercise_type, (40, 180))
                 progress = MotionAnalyzer.normalize_value_bar(exercise.latest_angle, angle_range[0], angle_range[1])
                 wheel_progress = 0.18 * progress + (1 - 0.18) * wheel_progress
                 smooth_progress = 0.115 * progress + (1 - 0.115) * smooth_progress
             else:
                 smooth_progress = 0.0
-            # Detectar si se completó una repetición:
+
+            # Verificar si se completó una repetición
             if exercise.counter > last_counter:
                 rep_metrics = metrics_obj.get_metrics(exercise.counter)
                 logger.info("Repetition completed: %s", rep_metrics)
                 rep_metrics["exercise"] = exercise_type
                 export_metrics(rep_metrics)
                 last_counter = exercise.counter
-                metrics_obj.reset()  # Reiniciamos para la siguiente repetición
+                metrics_obj.reset()  # Reiniciar la recolección de métricas para la siguiente repetición
+
             try:
+                # Dibujar overlays sobre el frame anotado
                 annotated_frame = draw_overlays(annotated_frame, wheel_progress, smooth_progress, exercise,
                                                 rep_metrics, frame_width, frame_height, exercise_type, current_time)
             except Exception as e:
                 logger.exception("Error drawing overlay: %s", e)
+
             if out is not None:
                 out.write(annotated_frame)
+
+            # Redimensionar el frame para mostrarlo correctamente
             annotated_frame = resize_frame(annotated_frame, 1280, 720)
             cv2.imshow('Virtual GYM', annotated_frame)
             if cv2.waitKey(10) & 0xFF == ord('q'):
@@ -175,6 +203,7 @@ def main(input_source):
             out.release()
         cv2.destroyAllWindows()
         logger.info("Application terminated.")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Virtual Gym Exercise Analyzer")
