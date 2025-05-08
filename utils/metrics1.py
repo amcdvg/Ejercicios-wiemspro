@@ -386,7 +386,7 @@ class Metrics:
             filtered = medfilt(filtered, kernel_size=5)
             
             # 4. Calcular VMAX con factores de Virtue
-            vmax = (np.max(filtered) * self.vmax_factor  * 0.475) + 0.75#* 0.5) + 0.7
+            vmax = (np.max(filtered) * self.vmax_factor  * 0.557) + 0.62#* 0.475) + 0.75#* 0.5) + 0.7 #* 0.577) + 0.59
             
             return max(vmax, 0.0)  # Evitar valores negativos
         
