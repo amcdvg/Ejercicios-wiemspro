@@ -120,7 +120,7 @@ class DeadliftExercise(Exercise):
             bbox_height_px = bbox_bottom - bbox_top
             if bbox_height_px > 0:
                 self.pixel_scale = self.user_height / bbox_height_px
-                print(f"Calibrated using bbox: 1px = {self.pixel_scale:.4f} m")
+                #print(f"Calibrated using bbox: 1px = {self.pixel_scale:.4f} m")
 
         # Calibración del umbral dinámico a partir de los desplazamientos (wrist-ankle)
         if self.disp_threshold is None:
@@ -129,11 +129,11 @@ class DeadliftExercise(Exercise):
                 ankle = keypoints[ankle_idx]
                 disp_px = abs(ankle[1] - wrist[1])
                 self.calib_disp.append(disp_px)
-                print(f"Calibration displacement: {disp_px:.2f} px (acumulated: {len(self.calib_disp)})")
+                #print(f"Calibration displacement: {disp_px:.2f} px (acumulated: {len(self.calib_disp)})")
                 if len(self.calib_disp) >= 5:
                     max_disp_px = max(self.calib_disp)
                     self.disp_threshold = (max_disp_px * self.pixel_scale) - 0.04
-                    print(f"Dynamic threshold calculated: {self.disp_threshold:.4f} m")
+                    #print(f"Dynamic threshold calculated: {self.disp_threshold:.4f} m")
             return None
 
         # Si la pose es válida, se procede a calcular el desplazamiento actual:
@@ -156,7 +156,7 @@ class DeadliftExercise(Exercise):
                 smoothed_displacement = displacement_m
 
             self._latest_displacement = smoothed_displacement
-            print(f"[Deadlift] SavGol filtered displacement {smoothed_displacement:.2f} m")
+            #print(f"[Deadlift] SavGol filtered displacement {smoothed_displacement:.2f} m")
             self.wrist_pos = tuple(map(int, wrist))
             self.ankle_pos = tuple(map(int, ankle))
 
@@ -177,7 +177,7 @@ class DeadliftExercise(Exercise):
                 self.counter += 1
                 self.stage = "up"
                 self.rep_finished = True
-                print(f"[Deadlift] Transition to UP: filtered displacement {smoothed_displacement:.2f}, rep count: {self.counter}, rep time: {self.current_rep_time:.2f}")
+                #print(f"[Deadlift] Transition to UP: filtered displacement {smoothed_displacement:.2f}, rep count: {self.counter}, rep time: {self.current_rep_time:.2f}")
                 # Reiniciar la historia para la siguiente repetición
                 self.displacement_history.clear()
 

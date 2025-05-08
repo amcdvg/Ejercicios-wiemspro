@@ -12,13 +12,14 @@ class PoseEstimator:
     también se pueden aplicar overlays (anotaciones sobre el frame) si K.SHOW_POSE_OVERLAYS es True.
     """
 
-    def __init__(self, model_path='models/yolo11-pose.pt'):
+    def __init__(self, model_path='models/yolo11n-pose.pt'):
         """Inicializa el estimador de poses cargando el modelo YOLO pre-entrenado.
 
         Args:
             model_path (str, optional): Ruta del modelo pre-entrenado YOLO para poses. 
-                Por defecto, 'models/yolo11-pose.pt'.
+                Por defecto, 'models/yolo11n-pose.pt'.
         """
+        
         self.model = YOLO(model_path)
 
     def estimate(self, frame, relevant_indices=None):

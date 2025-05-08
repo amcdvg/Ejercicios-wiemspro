@@ -21,7 +21,7 @@ from exercises.deadlift import DeadliftExercise
 from exercises.reverse_fly import ReverseFlyExercise
 from exercises.swing import SwingExercise
 from exercises.renegade_row import RenegadeRowExercise
-from exercises.rear_lunge import RearLugeExercise
+from exercises.rear_lunge import RearLungeExercise
 from exercises.bench_dips import BenchDipsExercise
 from exercises.overhead_triceps import ExtensionTricepsExercise
 
@@ -37,7 +37,7 @@ class_mapping = {
     'ReverseFlyExercise': ReverseFlyExercise,
     'SwingExercise': SwingExercise,
     'RenegadeRowExercise': RenegadeRowExercise,
-    'RearLugeExercise': RearLugeExercise,
+    'RearLugeExercise': RearLungeExercise,
     'BenchDipsExercise': BenchDipsExercise,
     'ExtensionTricepsExercise': ExtensionTricepsExercise
 }
@@ -126,7 +126,7 @@ def main(input_source):
 
         # Instancia del objeto Metrics para calcular las métricas según el ejercicio.
         metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
-
+        
         last_counter = 0
         smooth_progress = 0.0
         wheel_progress = 0.0
