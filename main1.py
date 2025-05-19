@@ -44,10 +44,22 @@ class_mapping = {
 }
 
 # Parámetros del sujeto
-subject_height = 1.84
-subject_gender = "male"
-subject_age = 21
-selected_side = "right"
+exercise_type = exercises[0]
+subject_height = 1.55
+subject_gender = "famale"
+subject_age = 69
+selected_side = "left"
+if exercise_type == "deadlift":
+    subject_factor = subject_height * 0.754347826086
+    subject_offset = 0.2457
+elif exercise_type == "squat":
+    if subject_gender == "famale":
+        subject_factor = 1
+        subject_offset = 0.04
+    else:
+        subject_factor =  1
+        subject_offset = 0.04
+location = 0
 
 NUM_THREADS = 4  # Hilos paralelos
 #BATCH_SIZE =  8  # Tamaño de lote para procesamiento
@@ -73,10 +85,11 @@ def process_frame(frame_data):
             data = None
         if data is not None:
             keypoints, confs = data
+            
             # Se procesa la pose actualizada, propagando el current_time al método process().
             exercise.process(keypoints, confs, frame=annotated_frame, current_time=current_time)
             # Actualizar la escala (pixel_scale) en el objeto Metrics si se ha calculado en el ejercicio.
-            if isinstance(exercise, DeadliftExercise) and exercise.get_pixel_scale() is not None:
+            if isinstance(exercise, SquatExercise) and exercise.get_pixel_scale() is not None:
                 if not hasattr(metrics_obj, 'pixel_scale'):
                     metrics_obj.pixel_scale = exercise.get_pixel_scale()  # Transferir la escala
             # Actualizar las métricas sólo si la repetición está activa (fase "down")
@@ -107,7 +120,7 @@ def main(input_source):
 
     try:
         # Configuración inicial del ejercicio
-        exercise_type = exercises[3]
+        exercise_type = exercises[0]
         logger.info("Exercise type: %s", exercise_type)
 
         class_name_str, relevant_indices = exercise_mapping.get(exercise_type, (None, None))
@@ -121,7 +134,7 @@ def main(input_source):
             logger.error("Clase de ejercicio no encontrada")
             return
 
-        exercise = exercise_class(selected_side, user_height=subject_height)
+        exercise = exercise_class(selected_side, user_height=subject_height, user_location = location)
         pose_estimator = PoseEstimator(model_path='models/yolo11n-pose.pt')
 
         # Configuración de la fuente de video
@@ -158,7 +171,7 @@ def main(input_source):
             out = cv2.VideoWriter(output_file, fourcc, fps, (width, height))
             time_sync = TimeSync(is_camera=False, fps=fps)
 
-        metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
+        metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age, subject_factor, subject_offset, location)
         metrics_obj.last_counter = 0
         frame_count = 0
 

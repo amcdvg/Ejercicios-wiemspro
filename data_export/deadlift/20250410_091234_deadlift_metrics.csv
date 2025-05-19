@@ -1,3 +1,0 @@
-start_datetime,age,gender,height (m),effective_length (m),min_angle (°),max_angle (°),ROM (cm),VMED (m/s),VMAX (m/s),rep_time,repetition
-2025-04-10T09:12:33.054692,21,male,1.84,0.815,,,5259.381,2.6,3.3,1.24,1
-2025-04-10T09:13:01.465932,21,male,1.84,0.815,,,5278.162,2.6,3.3,1.08,2

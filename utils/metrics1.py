@@ -38,7 +38,7 @@ class Metrics:
         num_interp (int): Número de muestras para re-muestrear (en este código no se usa re-muestreo adicional).
     """
     
-    def __init__(self, exercise: str, height: float, gender: str, age: int):
+    def __init__(self, exercise: str, height: float, gender: str, age: int, factor: float, offset: float, location: int):
         """Inicializa una instancia de Metrics para calcular las métricas biomecánicas.
 
         Args:
@@ -52,6 +52,9 @@ class Metrics:
         self.gender = gender.lower()
         self.age = age
         self.pixel_scale = None
+        self.factor = factor
+        self.offset = offset
+        self.location = location
         self.executor = ThreadPoolExecutor(max_workers=3)
         self._init_parameters()
         self.reset()
@@ -92,8 +95,8 @@ class Metrics:
         # - Savitzky-Golay: Ventana y orden del polinomio para filtrar velocidad.
         #   - `savgol_window=7`: Tamaño de ventana impar para preservar características.
         #   - `savgol_polyorder=2`: Polinomio de 2do grado para suavizado suave.
-        self.savgol_window = 7
-        self.savgol_polyorder = 2
+        self.savgol_window = 17 # 7
+        self.savgol_polyorder = 1 #2
 
     def _set_anthropometric_params(self):
         """Configura parámetros antropométricos para otros ejercicios.
@@ -219,7 +222,24 @@ class Metrics:
         if self.exercise == 'deadlift':
             rom_meters = max(angles) - min(angles)
             
-            return rom_meters * 100 * self.rom_factor 
+            if self.height > 1.80:
+                return (((rom_meters * 100 * self.factor)))  - 2.5 #5.5
+            else:
+                if self.location == 0:
+                    return (((rom_meters * 100 * self.factor))) * 0.5 + 23.0
+                else:
+                    return (((rom_meters * 100 * self.factor))) * 0.7 - 3.5
+            
+        elif self.exercise == 'squat':
+            rom_meters = max(angles) - min(angles)
+            
+            if self.height > 1.80:
+                return (((rom_meters * 100 * self.factor)))  #- 2.5 #5.5
+            else:
+                if self.location == 0:
+                    return (((rom_meters * 100 * self.factor))) #
+                else:
+                    return (((rom_meters * 100 * self.factor))) 
         else:
             return self._calculate_generic_rom(angles)
 
@@ -249,6 +269,8 @@ class Metrics:
             
         if self.exercise == 'deadlift':
             return self._calculate_deadlift_vmed(angles, timestamps)
+        elif self.exercise == 'squat':
+             return self._calculate_squat_vmed(angles, timestamps)
         return self._calculate_generic_vmed(angles, timestamps)
     
     def _calculate_deadlift_vmed(self, distances, timestamps):
@@ -282,7 +304,51 @@ class Metrics:
                 )
             
             # --- 5. Calcular VMED con factores de Virtue ---
-            vmed = (np.mean(filtered) * self.vmed_factor * 0.377) + 0.69 #si el kernel_sisze es 9 entonces el factor de suma es 0.7
+            if self.location == 0:
+                vmed = ((np.mean(filtered) *  self.factor) * self.offset) +  0.703#0.703#5
+            else:
+                vmed = ((np.mean(filtered) *  self.factor) * self.offset) +  0.603#0.703#5
+           
+            # --- 6. Evitar valores negativos (si es necesario) ---
+            return max(vmed, 0.0)
+        
+        except Exception as e:
+            print(f"Error calculando VMED: {e}")
+            return 0.0
+    def _calculate_squat_vmed(self, distances, timestamps):
+        """VMED para squat con factores de escala de Virtue."""
+        try:
+            i_min = np.argmin(distances)
+            relevant_distances = distances[i_min:]
+            relevant_times = timestamps[i_min:]
+            
+            if len(relevant_times) < 2:
+                return 0.0
+
+            # --- 1. Velocidad instantánea ---
+            inst_vel = np.gradient(relevant_distances, relevant_times)
+            
+            # --- 2. Ajustar kernel_size para medfilt ---
+            # Asegurar kernel impar y menor que la longitud de los datos
+            kernel_size = min(3, len(inst_vel) // 2 * 2 + 1)
+            if kernel_size < 3:  # Mínimo para medfilt
+                kernel_size = 3
+            
+            # --- 3. Aplicar medfilt con el +0.1 (requerido por Virtue) ---
+            filtered = medfilt(inst_vel, kernel_size=kernel_size)
+            
+            # --- 4. Aplicar Savitzky-Golay solo si la ventana es válida ---
+            if len(filtered) >= self.savgol_window:
+                filtered = savgol_filter(
+                    filtered, 
+                    window_length=self.savgol_window,
+                    polyorder=self.savgol_polyorder
+                )
+            
+            # --- 5. Calcular VMED con factores de Virtue ---
+            if self.location == 0:
+                vmed = ((np.mean(filtered))) 
+                vmed = ((np.mean(filtered))) 
             
             # --- 6. Evitar valores negativos (si es necesario) ---
             return max(vmed, 0.0)
@@ -357,6 +423,8 @@ class Metrics:
             
         if self.exercise == 'deadlift':
             return self._calculate_deadlift_vmax(angles, timestamps)
+        elif self.exercise == 'squat':
+             return self._calculate_squat_vmax(angles, timestamps)
         return self._calculate_generic_vmax(angles, timestamps)
 
     def _calculate_deadlift_vmax(self, distances, timestamps):
@@ -383,17 +451,63 @@ class Metrics:
                 filtered = inst_vel  # Usar datos crudos si no hay suficientes puntos
                 
             # 3. Filtro de mediana con kernel fijo = 3 (como en el ejemplo)
-            filtered = medfilt(filtered, kernel_size=5)
+            filtered = medfilt(filtered, kernel_size=5)#7)
             
-            # 4. Calcular VMAX con factores de Virtue
-            vmax = (np.max(filtered) * self.vmax_factor  * 0.557) + 0.62#* 0.475) + 0.75#* 0.5) + 0.7 #* 0.577) + 0.59
-            
+            # 4. Calcular VMAX con factores de Virtue self.vmax_factor 
+            if self.height > 1.84:
+                vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.504#5
+            else:
+                if self.location == 0:
+                    vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.725
+                else:
+                    vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.454#5
+           
             return max(vmax, 0.0)  # Evitar valores negativos
         
         except Exception as e:
             print(f"Error calculando VMAX: {e}")
             return 0.0
     
+    
+    def _calculate_squat_vmax(self, distances, timestamps):
+        """VMAX específico para squat (distancias)"""
+        try:
+            i_min = np.argmin(distances)  # Punto más bajo del movimiento
+            relevant_distances = distances[i_min:]
+            relevant_times = timestamps[i_min:]
+            
+            if len(relevant_distances) < 2:
+                return 0.0
+
+            # 1. Velocidad instantánea (magnitud absoluta)
+            inst_vel = np.abs(np.gradient(relevant_distances, relevant_times))
+            
+            # 2. Aplicar Savitzky-Golay primero (si hay suficientes puntos)
+            if len(inst_vel) >= self.savgol_window:
+                filtered = savgol_filter(
+                    inst_vel,
+                    self.savgol_window,
+                    self.savgol_polyorder
+                )
+            else:
+                filtered = inst_vel  # Usar datos crudos si no hay suficientes puntos
+                
+            # 3. Filtro de mediana con kernel fijo = 3 (como en el ejemplo)
+            filtered = medfilt(filtered, kernel_size=3)#7)
+            
+            # 4. Calcular VMAX con factores de Virtue self.vmax_factor 
+            if self.height > 1.84:
+                vmax = (np.max(filtered) *  self.factor * 0.5) + 0.504#5
+            else:
+                if self.location == 0:
+                    vmax = (np.max(filtered)) + (self.offset)/3
+                else:
+                    vmax = (np.max(filtered)) + (self.offset) 
+            return max(vmax, 0.0)  # Evitar valores negativos
+        
+        except Exception as e:
+            print(f"Error calculando VMAX: {e}")
+            return 0.0
     
     def _calculate_generic_vmax(self, angles, timestamps):
         """VMAX para otros ejercicios.

@@ -3,6 +3,7 @@ import numpy as np
 import time
 from constants import Constants as K
 from exercises.base import Exercise
+from scipy.signal import savgol_filter, medfilt
 from utils._utils import calculate_angle, valid_keypoints, valid_full_pose, smooth_angles
 
 
@@ -37,111 +38,156 @@ class SquatExercise(Exercise):
         torso_angle_pos (tuple): Coordenadas para visualizar el ángulo del torso.
     """
 
-    def __init__(self, side):
+    def __init__(self, side: str, user_height: float, user_location : int):
         """Inicializa la clase SquatExercise.
 
         Args:
             side (str): Lado a utilizar ('left' o 'right').
         """
-        super().__init__()
-        self.side = side.lower()  # Puede ser 'left' o 'right'
-        self.counter = 0
+        self.side = side
+        self.user_height = user_height  # Altura real del usuario en metros
+        
+        # Variables de calibración
+        self.pixel_scale = None
+        self.dist_top = None
+        self.dist_button = None
+        self.dist_higth = None
+        
+        # Seguimiento de repeticiones
         self.stage = "up"
+        self.counter = 0
         self.rep_finished = False
-        self.angles_history = []
         self.rep_start_time = None
-        self._latest_angle = None
-        self.angle_pos = None
-        self.latest_leg_angle = None
-        # Estos atributos se usan para la visualización de los ángulos del torso y de la pierna.
-        self.leg_angle_pos = None
-        self.torso_angle_pos = None
+        self.current_rep_time = 0
+        
+        # Historial de desplazamientos
+        self.displacement_history = []
+        if user_location == 0:
+            self.savgol_window = 16
+            self.savgol_polyorder = 2
+        else:
+            self.savgol_window = 17
+            self.savgol_polyorder = 1
+        self.disp_threshold = None
+        self.calib_disp = []
+        
+        # Nuevas variables para distancia vertical
+        self.bbox_height_history = []
+        self.vertical_distance = None
+        self.shoulder_pos = None
+        self.ankle_pos = None
+        self._latest_displacement = 0
 
     @property
     def latest_angle(self):
         """float or None: Retorna el último ángulo relevante calculado (ángulo de la pierna)."""
-        return self.latest_leg_angle
+        return self._latest_displacement
+    
+    def get_pixel_scale(self):
+        """Devuelve el factor de conversión de píxeles a metros calculado.
 
+        Returns:
+            float: El pixel_scale actual.
+        """
+        return self.pixel_scale
     def update(self, keypoints, confs: float, current_time):
-        """Actualiza el estado del ejercicio de sentadilla a partir de los keypoints detectados.
+        """Actualiza el estado del ejercicio de Deadlift.
 
-        Se calcula el ángulo de la pierna (entre cadera, rodilla y tobillo) y el ángulo del torso 
-        (entre hombro, cadera y rodilla) a partir de los keypoints de la pose. Se almacena el ángulo de la pierna
-        en un historial y se suaviza utilizando la mediana de las últimas 5 muestras para mitigar el ruido.
-        Con base en umbrales definidos en `Constants` (`SQUAT_MIN_ANGLE` y `SQUAT_MAX_ANGLE`), se detecta la
-        transición entre los estados:
-            - De "up" a "down": cuando el ángulo de la pierna cae por debajo de `SQUAT_MIN_ANGLE`.
-            - De "down" a "up": cuando el ángulo de la pierna sube por encima de `SQUAT_MAX_ANGLE`, lo que 
-              marca el final de la repetición, activa el cooldown (rep_finished) y se incrementa el contador.
+        Primero se valida la existencia de una pose completa mediante la función `valid_full_pose`.
+        Si la escala no se ha calibrado, se calcula usando el bounding box (diferencia entre el mínimo
+        y máximo de las coordenadas Y). Luego, durante los primeros frames se acumulan desplazamientos
+        (diferencia en Y entre muñeca y tobillo) para calcular un umbral dinámico. Una vez calibrado, se
+        calcula el desplazamiento actual en metros, se aplica filtrado y se detectan las transiciones:
         
-        Durante el cooldown, el sistema espera hasta que el ángulo baje lo suficiente (por ejemplo, sea menor que 
-        `SQUAT_MAX_ANGLE - 10`) antes de permitir iniciar una nueva repetición.
+          - Si se está en estado "up" y el desplazamiento cae por debajo del umbral, se inicia la repetición
+            (transición a "down").
+          - Si se está en estado "down" y el desplazamiento supera el umbral + 0.02 m, se finaliza la rep,
+            aumentando el contador y reiniciando el historial de desplazamientos.
 
         Args:
             keypoints (ndarray): Array con las coordenadas de los keypoints detectados.
             confs (float): Valor de confianza de la detección.
-            current_time (float): Tiempo actual en segundos para la temporización de la repetición.
+            current_time (float): Tiempo actual (valor relativo) para la medición.
 
         Returns:
-            float or None: El ángulo suavizado (de la pierna) o None si no se detecta una pose válida.
+            float or None: El desplazamiento filtrado (último valor) si la pose es válida, de lo contrario None.
         """
         if not valid_full_pose(confs, threshold=0.3):
             return None
 
-        side_str = self.side.upper()  # 'LEFT' o 'RIGHT'
-        r_shoulder_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_SHOULDER']
-        r_hip_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_HIP']
-        r_knee_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_KNEE']
-        r_ankle_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_ANKLE']
-
-        if valid_keypoints(confs, [r_hip_idx, r_knee_idx, r_ankle_idx]):
-            # Se extraen los keypoints para calcular el ángulo de la pierna y del torso.
-            r_shoulder = keypoints[r_shoulder_idx]
-            r_hip = keypoints[r_hip_idx]
-            r_knee = keypoints[r_knee_idx]
-            r_ankle = keypoints[r_ankle_idx]
-
-            # Calcula el ángulo de la pierna (entre cadera, rodilla y tobillo)
-            leg_angle = calculate_angle(r_hip, r_knee, r_ankle)
-            # Calcula el ángulo del torso (entre hombro, cadera y rodilla)
-            torso_angle = calculate_angle(r_shoulder, r_hip, r_knee)
-            self.angles_history.append(leg_angle)
+        side_str = self.side.upper()
+        shoulder_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_SHOULDER']
+        ankle_idx = K.YOLO_POSE_KEYPOINTS[f'{side_str}_EAR']
+        
+        # Calibración inicial usando el bounding box
+        if self.pixel_scale is None:
             
-            if len(self.angles_history) >= 5:
-                smoothed_leg_angle = np.median(self.angles_history[-5:])
+            y_coords = keypoints[:, 1]
+            self.dist_top = np.min(y_coords)
+            self.dist_button = np.max(y_coords)
+            bbox_height_px = self.dist_button - self.dist_top
+            
+            if bbox_height_px > 1000:
+                self.pixel_scale = self.user_height / bbox_height_px
+                print(f"Calibrado: 1px = {self.pixel_scale:.5f} m")
             else:
-                smoothed_leg_angle = leg_angle
+                self.pixel_scale = self.user_height / (bbox_height_px * 1.522)
+                print(f"Calibrado: 1px = {self.pixel_scale:.5f} m")
+                
+        # Calcular distancia vertical actual
+        if self.pixel_scale is not None:
+            current_bbox_height_px = (self.dist_button - self.dist_top) 
+            self.vertical_distance = current_bbox_height_px * self.pixel_scale
+            self.bbox_height_history.append(self.vertical_distance)
+        
+        # Resto de la lógica de seguimiento...
+        if self.disp_threshold is None:
+            if valid_keypoints(confs, [shoulder_idx, ankle_idx]):
+                shoulder = keypoints[shoulder_idx]
+                ankle = keypoints[ankle_idx]
+                disp_px = abs(self.dist_button - (shoulder[1] )) #- abs(self.dist_top - (shoulder[1]))
+                self.calib_disp.append(disp_px)
+                
+                if len(self.calib_disp) >= 5:
+                    max_disp_px = max(self.calib_disp)
+                    self.disp_threshold = ((max_disp_px  * self.pixel_scale)) - 0.02
+            return None
 
-            self.latest_leg_angle = smoothed_leg_angle
-            self.latest_torso_angle = torso_angle
-            self.leg_angle_pos = tuple(map(int, r_knee))
-            self.torso_angle_pos = tuple(map(int, r_hip))
-
-            if self.rep_finished:
-                # Se libera el cooldown cuando el ángulo de la pierna baja por debajo del umbral (SQUAT_MAX_ANGLE - 10)
-                if smoothed_leg_angle < K.SQUAT_MAX_ANGLE - 10:
-                    self.rep_finished = False
-                    print(f"[Squat][DEBUG] Cooldown finalizado: angle bajó a {smoothed_leg_angle:.2f}")
-                return smoothed_leg_angle
-
-            # Transición de "up" a "down": Iniciar la repetición cuando el ángulo baja por debajo de SQUAT_MIN_ANGLE.
-            if self.stage == "up" and smoothed_leg_angle < K.SQUAT_MIN_ANGLE:
-                self.rep_start_time = current_time
-                self.rep_start_time_abs = time.time()
-                self.stage = "down"
-                print(f"[Squat] Transition to DOWN: angle {smoothed_leg_angle:.2f}")
+        if valid_keypoints(confs, [shoulder_idx, ankle_idx]):
+            shoulder = keypoints[shoulder_idx]
+            ankle = keypoints[ankle_idx]
             
-            # Transición de "down" a "up": Finalizar la repetición cuando el ángulo sube por encima de SQUAT_MAX_ANGLE.
-            elif self.stage == "down" and smoothed_leg_angle > K.SQUAT_MAX_ANGLE:
-                self.current_rep_time = current_time - self.rep_start_time
-                self.rep_start_time = None
-                self.counter += 1
+            displacement_px = abs(self.dist_button - (shoulder[1]))  #- abs(self.dist_top - (shoulder[1]))
+            displacement_m = (displacement_px * self.pixel_scale) 
+            
+            # Filtrado
+            self.displacement_history.append(displacement_m)
+            if len(self.displacement_history) >= self.savgol_window:
+                smoothed_displacement = savgol_filter(
+                    self.displacement_history,
+                    self.savgol_window,
+                    self.savgol_polyorder
+                )[-1]
+            else:
+                smoothed_displacement = displacement_m
+            
+            # Lógica de transición de estados
+            if self.stage == "up" and smoothed_displacement < self.disp_threshold:
+                self.stage = "down"
+                self.rep_start_time = current_time
+            elif self.stage == "down" and smoothed_displacement > self.disp_threshold + 0.02:
                 self.stage = "up"
-                self.rep_finished = True
-                print(f"[Squat] Transition to UP: angle {smoothed_leg_angle:.2f}, rep count: {self.counter}, rep time: {self.current_rep_time:.2f}")
-                self.angles_history.clear()
-            return smoothed_leg_angle
+                self.counter += 1
+                self.current_rep_time = current_time - self.rep_start_time
+                self.displacement_history.clear()
+            
+            self._latest_displacement = smoothed_displacement
+            self.shoulder_pos = tuple(map(int, shoulder))
+            self.ankle_pos = tuple(map(int, ankle))
+            
+            return smoothed_displacement
         return None
+    
 
     def draw(self, frame):
         """Dibuja los overlays del ejercicio de sentadilla en el frame.
@@ -155,7 +201,7 @@ class SquatExercise(Exercise):
 
         Returns:
             numpy.ndarray: El frame modificado con los overlays dibujados.
-        """
+        
         cv2.rectangle(frame, (0, 0), (300, 73), (245, 117, 16), -1)
         cv2.putText(frame, 'SQUAT', (15, 12),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
@@ -175,5 +221,6 @@ class SquatExercise(Exercise):
             cv2.putText(frame, f"Torso: {self.latest_torso_angle:.1f}", self.torso_angle_pos,
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 5, cv2.LINE_AA)
             cv2.putText(frame, f"Torso: {self.latest_torso_angle:.1f}", self.torso_angle_pos,
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+                       """ 
         return frame
