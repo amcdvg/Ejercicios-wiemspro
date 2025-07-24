@@ -140,8 +140,14 @@ Una vez que tenga activado el entorno virtual, se ejecutará el  siguiente coman
 
 ## Ejecución del script
 
-Desdde una terminal, teniendo el entorno virtual activado, se procederá a ejecutar el siguiente comando
+Desdde una terminal, teniendo el entorno virtual activado, se procederá a ejecutar el siguiente comando, para trabajar en tiempo real
 
 ```bash
   python main.py
+```
+Para procesar un video, se debe ejecutar el siguiente comando 
+
+
+```bash
+python main.py --source path/del/video
 ```
