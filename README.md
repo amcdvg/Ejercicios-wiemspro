@@ -151,4 +151,8 @@ Para procesar un video, se debe ejecutar el siguiente comando
 
 ```bash
 python main.py --source path/del/video
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 62d29bbbc29ad2153ca6a6e9d3e8079e2772f608
