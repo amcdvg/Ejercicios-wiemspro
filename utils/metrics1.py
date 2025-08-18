@@ -1,617 +1,548 @@
-from concurrent.futures import ThreadPoolExecutor
 import numpy as np
-from scipy.signal import savgol_filter, medfilt
+from scipy.signal import butter, filtfilt, medfilt, savgol_filter
+from scipy.interpolate import interp1d
 import copy
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
 from constants import Constants as K
 
 class Metrics:
-    """Calcula las métricas biomecánicas a partir de una serie de desplazamientos y timestamps.
-
-    Esta clase se utiliza para obtener, a partir de los datos del ejercicio, tres métricas
-    principales:
-      - ROM (Range Of Motion): La diferencia entre el valor máximo y mínimo de los desplazamientos,
-        convertida a centímetros y ajustada mediante un factor de ROM base.
-      - VMED (Velocidad Media): Calculada a partir de la derivada de la señal de desplazamiento
-        (suavizada con un filtro Savitzky–Golay y un filtro de mediana) en la fase concéntrica (desde
-        el mínimo hasta el final) y corregida empíricamente.
-      - VMAX (Velocidad Máxima): Se obtiene del valor máximo de la señal derivada, luego filtrada y
-        corregida empíricamente.
-    
-    Los métodos de corrección (_apply_vmed_corrections y _apply_vmax_corrections) toman los valores
-    brutos calculados y los ajustan usando factores definidos en Constants, además de aplicar una
-    multiplicación y adición final (0.5 y 0.6 para VMED, 0.5 y 0.7 para VMAX) para alinear la escala con
-    mediciones de referencia.
-    
-    Atributos:
-        exercise (str): Nombre del ejercicio (e.g., 'deadlift', 'curl', etc.), en minúscula.
-        height (float): Altura del sujeto en metros.
-        gender (str): Género del sujeto ('male' o 'female'), en minúscula.
-        age (int): Edad del sujeto.
-        pixel_scale (float or None): Factor de conversión de píxeles a metros (se calcula en base a la imagen).
-        segment_length (float): Longitud del segmento de referencia (calculada mediante funciones antropométricas).
-        angles (list): Lista de desplazamientos (o ángulos) medidos a lo largo del ejercicio.
-        timestamps (list): Lista de tiempos (en segundos) asociados a cada medición.
-        start_time (float or None): Tiempo inicial del registro.
-        savgol_window (int): Ventana para el filtro Savitzky–Golay (número impar).
-        savgol_polyorder (int): Orden polinomial para el filtro Savitzky–Golay.
-        num_interp (int): Número de muestras para re-muestrear (en este código no se usa re-muestreo adicional).
+    """
+    Clase para calcular métricas de movimiento (ROM, VMED, VMAX) a partir de datos de posición y tiempo.
+    Incluye procesamiento de señal y métodos robustos para cálculo de velocidades.
     """
     
-    def __init__(self, exercise: str, height: float, gender: str, age: int, factor: float, offset: float, location: int):
-        """Inicializa una instancia de Metrics para calcular las métricas biomecánicas.
-
+    def __init__(
+        self,
+        exercise: str,
+        height: float = None,
+        gender: str = None,
+        age: int = None,
+        factor: float = 1.0,
+        offset: float = 1.0,
+        location: int = 0,
+        pixel_to_meter: float = 0.0025,
+        sampling_rate: float = 25.0
+    ):
+        """
+        Inicializa la clase Metrics con parámetros de configuración.
+        
         Args:
-            exercise (str): Nombre del ejercicio (e.g., 'deadlift').
-            height (float): Altura del sujeto en metros.
-            gender (str): Género del sujeto ('male' o 'female').
-            age (int): Edad del sujeto.
+            exercise: Nombre del ejercicio (para ajustes específicos)
+            height: Altura del usuario (metros)
+            gender: Género del usuario
+            age: Edad del usuario
+            factor: Factor de ajuste general
+            offset: Offset para cálculos
+            location: Ubicación del sensor
+            pixel_to_meter: Factor de conversión píxeles a metros
+            sampling_rate: Frecuencia de muestreo original (Hz)
         """
         self.exercise = exercise.lower()
         self.height = height
-        self.gender = gender.lower()
+        self.gender = gender.lower() if gender else None
         self.age = age
-        self.pixel_scale = None
         self.factor = factor
         self.offset = offset
         self.location = location
+
+        # Configuración de procesamiento de señal
+        self.pixel_to_meter = pixel_to_meter
+        self.sampling_rate = sampling_rate
+        self.savgol_window = 7          # Ventana para filtro Savitzky-Golay (debe ser impar)
+        self.savgol_polyorder = 2        # Orden del polinomio para Savitzky-Golay
+        self.alpha = 0.2                 # Factor de suavizado para valores entre repeticiones
+        self._prev_vmax_smooth = None    # Valor suavizado anterior de VMAX
+        self._prev_vmed_smooth = None    # Valor suavizado anterior de VMED
+        
+        # Configuración adicional
+        self.smooth_window = 11
+        self.smooth_polyorder = 8
+        self.vel_method = "ols"          # Método para cálculo de velocidad ("gradient" u "ols")
+        self.ols_window_seconds = 0.15   # Ventana temporal para cálculo OLS (segundos)
+
+        # Thread pool para cálculos paralelos
         self.executor = ThreadPoolExecutor(max_workers=3)
-        self._init_parameters()
         self.reset()
 
-    def _init_parameters(self):
-        """Inicializa parámetros dependientes del ejercicio.
+    def reset(self):
+        """Reinicia los buffers de datos para una nueva repetición."""
+        self.distances = []      # distancias en píxeles
+        self.timestamps = []     # tiempos en segundos
+        self.start_time = None   # tiempo de inicio
 
-        Configura factores de escala, longitudes de segmento y parámetros de filtrado
-        según el tipo de ejercicio (ej: 'deadlift'). Utiliza valores predeterminados
-        basados en constantes definidas en el módulo `K` (ajustables según el modelo).
+    def update(self, distance: float, timestamp: float):
         """
-        # --- 1. Configuración específica para 'deadlift' ---
-        if self.exercise == 'deadlift':
-            # Longitud del segmento corporal (altura del sujeto)
-            self.segment_length = self.height  # Ej: Altura usada para ROM (Rango de Movimiento)
-            
-            # Factor de ajuste para ROM (Rango de Movimiento)
-            # - Obtiene el factor de K.ROM_BASE_FACTORS o usa 0.91 por defecto.
-            # - Ej: 0.91 podría escalar el ROM según normas de deadlift estándar.
-            self.rom_factor = K.ROM_BASE_FACTORS.get(self.exercise, 0.91)
+        Actualiza los buffers con nuevos datos de posición y tiempo.
         
-        # --- 2. Configuración para otros ejercicios ---
-        else:
-            # Método que define parámetros antropométricos (ej: longitudes de brazo/pierna)
-            # - Ej: Para 'sentadilla', podría usar proporciones de la altura.
-            self._set_anthropometric_params()
-        
-        # --- 3. Factores de velocidad (VMED y VMAX) ---
-        # - VMED (Velocidad Media): Factor de escala para cálculos de potencia.
-        #   - Ej: 0.85 ajusta la velocidad según el ejercicio (mayor en deadlift).
-        self.vmed_factor = K.VMED_BASE_FACTORS.get(self.exercise, 0.85)
-        
-        # - VMAX (Velocidad Máxima): Factor para estimar picos de velocidad.
-        #   - Ej: 0.48 podría reducir el peso de VMAX en ejercicios explosivos.
-        self.vmax_factor = K.VMAX_BASE_FACTORS.get(self.exercise, 0.48)
-        
-        # --- 4. Parámetros de filtrado para suavizado de datos ---
-        # - Savitzky-Golay: Ventana y orden del polinomio para filtrar velocidad.
-        #   - `savgol_window=7`: Tamaño de ventana impar para preservar características.
-        #   - `savgol_polyorder=2`: Polinomio de 2do grado para suavizado suave.
-        self.savgol_window = 17 # 7
-        self.savgol_polyorder = 1 #2
-
-    def _set_anthropometric_params(self):
-        """Configura parámetros antropométricos para otros ejercicios.
-
-        Define la longitud de segmentos corporales (ej: brazo/pierna) como un porcentaje
-        de la altura del sujeto, basado en proporciones biomecánicas estándar.
-        Ajusta `self.segment_length` para ejercicios que no sean 'deadlift'.
-
-        Valores clave:
-        - 'curl': 16% de la altura (bíceps: antebrazo + parte del brazo).
-        - 'squat': 25% de la altura (longitud de la pierna completa).
-        - 'pushup': 18% de la altura (brazo + hombro).
-        - 'reverse_fly': 15% de la altura (brazo en posición lateral).
-        - 'swing': 22% de la altura (pierna + cadera en movimientos dinámicos).
-        - Default: 15% (valor conservador para ejercicios no listados).
-        """
-        # Diccionario de factores antropométricos por ejercicio
-        exercise_params = {
-            'curl': 0.16,          # Ej: Bíceps curl (antebrazo + brazo)
-            'squat': 0.25,         # Ej: Sentadilla (pierna completa)
-            'pushup': 0.18,        # Ej: Flexiones (brazo + hombro)
-            'reverse_fly': 0.15,   # Ej: Aperturas laterales (brazo en 'T')
-            'swing': 0.22          # Ej: Swing de cadera (pierna + tronco)
-        }
-        
-        # --- Cálculo de la longitud del segmento ---
-        # - Factor antropométrico: Porcentaje de la altura del sujeto.
-        # - Ej: Para 'squat', segment_length = altura * 0.25 (longitud de pierna).
-        factor = exercise_params.get(self.exercise, 0.15)
-        self.segment_length = self.height * factor
-
-    def update(self, displacement: float, timestamp: float):
-        """Actualiza la serie de mediciones con un nuevo desplazamiento y timestamp.
-
-        Si es la primera medición, se establece el tiempo inicial. Luego, se agrega el
-        desplazamiento y el timestamp a sus respectivas listas.
-
         Args:
-            displacement (float): Desplazamiento medido (p.ej., en metros).
-            timestamp (float): Tiempo asociado a la medición (en segundos).
+            distance: Distancia en píxeles
+            timestamp: Tiempo en segundos
         """
         if not self.timestamps:
             self.start_time = timestamp
-        self.angles.append(displacement)
+        self.distances.append(distance)
         self.timestamps.append(timestamp)
 
-    def reset(self):
-        """Reinicia las mediciones de la repetición borrando la historia de ángulos y timestamps."""
-        self.angles = []
-        self.timestamps = []
-        self.start_time = None
-
-    def get_metrics(self, repetition: int):
+    def get_metrics(self, repetition: int) -> dict:
+        """
+        Calcula todas las métricas para la repetición actual.
         
-        """Genera un diccionario con las métricas calculadas para una repetición.
-
-        Las métricas incluyen:
-          - ROM (cm)
-          - VMED (m/s)
-          - VMAX (m/s)
-          - rep_time (duración de la repetición en segundos)
-          - repetition (número de repetición)
-        Para el ejercicio 'deadlift', también se añaden los valores mínimo y máximo de la señal de ángulos.
-
         Args:
-            repetition (int, optional): Número de repetición. Si no se especifica, se asigna 0.
-
+            repetition: Número de repetición actual
+            
         Returns:
-            dict: Diccionario con las métricas calculadas.
+            Diccionario con todas las métricas calculadas
         """
         try:
-            # Crear copias locales para consistencia
-            local_angles = copy.deepcopy(self.angles)
-            local_timestamps = copy.deepcopy(self.timestamps)
+            # Copia profunda de los datos para procesamiento
+            d_px = np.array(self.distances, dtype=float)
+            t = np.array(self.timestamps, dtype=float)
             
-            # Enviar cálculos al executor
-            rom_future = self.executor.submit(
-                self._calculate_rom,
-                local_angles,
-                local_timestamps
-            )
+            # Interpolación a 100 Hz para uniformizar la frecuencia de muestreo
+            target_fs = 100.0
+            t_new = np.arange(t[0], t[-1], 1.0/target_fs)
+            linear_interp = interp1d(t, d_px, kind='linear', fill_value='extrapolate')
+            d_px_interp = linear_interp(t_new)
+            t, d_px = t_new, d_px_interp
+            self.sampling_rate = target_fs
             
-            vmed_future = self.executor.submit(
-                self._calculate_vmed,
-                local_angles,
-                local_timestamps
-            )
+            # Procesamiento de señal en 4 etapas:
+            # 1. Filtro de mediana (kernel_size=3)
+            d_med = medfilt(d_px, kernel_size=3)
+            t_med = medfilt(t, kernel_size=3)
             
-            vmax_future = self.executor.submit(
-                self._calculate_vmax,
-                local_angles,
-                local_timestamps
-            )
+            # 2. Filtro pasabajos Butterworth (cutoff=36 Hz)
+            d_low = self._butter_lowpass(d_med, self.sampling_rate, cutoff=36.0)
+            t_low = self._butter_lowpass(t_med, self.sampling_rate, cutoff=36.0)
             
-            # Recoger y procesar resultados
-            return self._build_metrics(
-                rom_future.result(),
-                vmed_future.result(),
-                vmax_future.result(),
-                local_angles,
-                local_timestamps,
-                repetition
-            )
+            # 3. Filtro Savitzky-Golay para suavizado final
+            if len(d_low) >= self.savgol_window:
+                d_smooth = savgol_filter(
+                    d_low,
+                    window_length=self.savgol_window,
+                    polyorder=self.savgol_polyorder
+                )
+                t_smooth = savgol_filter(
+                    t_low,
+                    window_length=self.savgol_window,
+                    polyorder=self.savgol_polyorder
+                )
+            else:
+                d_smooth = d_low
+                t_smooth = t_low
             
+            d_px = d_smooth
+            t = t_smooth
+            
+            # Cálculo de métricas en paralelo
+            rom = self.executor.submit(self._calculate_rom, d_px).result()
+            vmed = self.executor.submit(self._calculate_vmed, d_px, t).result()
+            vmax = self.executor.submit(self._calculate_vmax, d_px, t).result()
+
+            # Cálculo de duración y validación
+            duration = (t[-1] - t[0]) if len(t) >= 2 else 0.0
+            valid = duration >= 0.5
+            
+            # Ajuste específico para la primera repetición
+            if repetition == 1:
+                rom = rom - 5.0
+                
+            # Cálculo de tolerancias
+            tol_rom = 0.03 * rom
+            tol_vmed = 0.10 * vmed
+            tol_vmax = 0.15 * vmax
+            
+            return {
+                "ROM (cm)": round(rom, 3),
+                "ROM_tol (cm)": round(tol_rom, 3),
+                "VMED (m/s)": round(vmed, 3),
+                "VMED_tol (m/s)": round(tol_vmed, 3),
+                "VMAX (m/s)": round(vmax, 3),
+                "VMAX_tol (m/s)": round(tol_vmax, 3),
+                "rep_time": round(duration, 3),
+                "repetition": repetition,
+                "exercise": self.exercise,
+                "valid": valid
+            }
+
         except Exception as e:
-            logging.error(f"Error en cálculo paralelo: {str(e)}")
+            logging.error(f"Error calculando métricas: {e}", exc_info=True)
             return self._empty_metrics(repetition)
 
-    def _calculate_rom(self, angles, timestamps):
-        
-        """Calcula el Range Of Motion (ROM) del ejercicio.
-
-        Para 'deadlift', ROM se calcula como la diferencia entre el máximo y mínimo de la señal de
-        desplazamiento, convertida a centímetros y escalada según el factor de ROM base. Para otros
-        ejercicios se utiliza la señal suavizada.
-
-        Returns:
-            float: ROM en centímetros.
+    def _calculate_rom(self, distances_px: list) -> float:
         """
-        if not angles:
+        Calcula el Rango de Movimiento (ROM) en centímetros.
+        
+        Args:
+            distances_px: Lista de distancias en píxeles
+            
+        Returns:
+            ROM en centímetros, ajustado por la altura del usuario
+        """
+        d_m = distances_px
+        rom = self.height * (float((d_m.max()) - (d_m.min() - 0.03)) * 100)
+        return rom - 3  # Ajuste empírico
+
+    def _calculate_vmed(self, distances_px: list, timestamps: list) -> float:
+        """
+        Calcula la Velocidad Media (VMED) en m/s con detección robusta de fase concéntrica.
+        
+        Args:
+            distances_px: Lista de distancias en píxeles
+            timestamps: Lista de tiempos correspondientes
+            
+        Returns:
+            Velocidad media en m/s, con suavizado entre repeticiones
+        """
+        d = np.asarray(distances_px, dtype=float)
+        t = np.asarray(timestamps, dtype=float)
+
+        # Validaciones básicas
+        if d.size < 5 or t.size != d.size or not np.all(np.diff(t) > 0):
+            return 0.0  # serie inválida
+
+        # Cálculo de velocidad
+        v = self.compute_v_series(d, t)
+        v = np.asarray(v, dtype=float)
+        v[~np.isfinite(v)] = 0.0
+
+        # Si ROM es muy pequeño, no hay repetición válida
+        rom_m = float(np.ptp(d))
+        if rom_m < 2e-3:  # < 2 mm
             return 0.0
-            
-        if self.exercise == 'deadlift':
-            rom_meters = max(angles) - min(angles)
-            
-            if self.height > 1.80:
-                return (((rom_meters * 100 * self.factor)))  - 2.5 #5.5
-            else:
-                if self.location == 0:
-                    return (((rom_meters * 100 * self.factor))) * 0.5 + 23.0
+
+        # 1) Segmentación primaria con umbral adaptativo
+        v_abs_max = float(np.max(np.abs(v))) if v.size else 0.0
+        v_thr_up = max(0.01, 0.05 * v_abs_max)  # Umbral de subida (5% del máx o 0.01 m/s)
+        v_thr_dn = 0.5 * v_thr_up               # Umbral de bajada (histéresis)
+        min_dt = 0.08                           # Duración mínima de fase (80 ms)
+        min_disp = 2e-3                         # Desplazamiento mínimo (2 mm)
+
+        # Detección de fases con histéresis (Schmitt trigger)
+        mask = np.zeros_like(v, dtype=bool)
+        on = False
+        for i in range(len(v)):
+            if not on and v[i] >= v_thr_up:
+                on = True
+            elif on and v[i] < v_thr_dn:
+                on = False
+            mask[i] = on
+
+        # Extracción de segmentos válidos
+        def _true_runs(m):
+            runs = []
+            i = 0
+            n = len(m)
+            while i < n:
+                if m[i]:
+                    j = i
+                    while j + 1 < n and m[j + 1]:
+                        j += 1
+                    runs.append((i, j))
+                    i = j + 1
                 else:
-                    return (((rom_meters * 100 * self.factor))) * 0.7 - 3.5
+                    i += 1
+            return runs
+
+        runs = _true_runs(mask)
+        
+        # Selección del mejor segmento
+        best = None
+        best_s = -np.inf
+        for i0, i1 in runs:
+            s = float(d[i1] - d[i0])
+            dt_seg = float(t[i1] - t[i0])
+            if dt_seg >= min_dt and s >= min_disp:
+                if s > best_s:
+                    best_s = s
+                    best = (i0, i1)
+
+        # 2) Fallback: envolvente monótona creciente
+        if best is None:
+            d_env = np.maximum.accumulate(d)
+            diff = np.diff(d_env, prepend=d_env[0])
+            pos = diff > 0
+            runs_env = _true_runs(pos)
+            for i0, i1 in runs_env:
+                s = float(d_env[i1] - d_env[i0])
+                dt_seg = float(t[i1] - t[i0])
+                if dt_seg >= min_dt and s >= min_disp and s > best_s:
+                    best_s = s
+                    best = (i0, i1)
+
+        # 3) Fallback: mínimo a máximo global
+        if best is None:
+            i_min = int(np.argmin(d))
+            i_max = int(np.argmax(d))
+            if i_max > i_min:
+                s = float(d[i_max] - d[i_min])
+                dt_seg = float(t[i_max] - t[i_min])
+                if dt_seg >= min_dt and s >= min_disp:
+                    best = (i_min, i_max)
+                    best_s = s
+
+        # Si no hay segmento válido
+        if best is None:
+            return 0.0
+
+        i0, i1 = best
+        s = float(d[i1] - d[i0])
+        dt_seg = float(t[i1] - t[i0])
+
+        if dt_seg <= 0 or s <= 0:
+            return 0.0
+
+        vmed = s / dt_seg  # m/s
+
+        # Suavizado entre repeticiones con lógica compleja
+        if self._prev_vmed_smooth is None:
+            self._prev_vmed_smooth = vmed + 0.2
+            return vmed + 0.4
             
-        elif self.exercise == 'squat':
-            rom_meters = max(angles) - min(angles)
-            
-            if self.height > 1.80:
-                return (((rom_meters * 100 * self.factor)))  #- 2.5 #5.5
-            else:
-                if self.location == 0:
-                    return (((rom_meters * 100 * self.factor))) #
-                else:
-                    return (((rom_meters * 100 * self.factor))) 
+        diff = (vmed - self._prev_vmed_smooth) / self._prev_vmed_smooth
+        print(f"Diferencia Vmed: {diff*100:.2f}%")
+
+        # Lógica de ajuste según diferencia porcentual
+        if diff > 0.22:
+            # Incremento significativo (>22%)
+            self._prev_vmed_smooth = self.alpha * vmed + (1 - self.alpha) * self._prev_vmed_smooth
+            print("Ajuste: Incremento >25% - Suavizado aplicado")
+        elif diff < -0.176:
+            # Decremento significativo (<-17.6%)
+            self._prev_vmed_smooth = self._prev_vmed_smooth * 0.95
+            print("Ajuste: Decremento >17.6% - Reducción limitada al 5%")
         else:
-            return self._calculate_generic_rom(angles)
+            if -0.176 <= diff <= -0.11:
+                # Decremento moderado
+                self._prev_vmed_smooth = self.alpha * vmed + (1 - self.alpha) * self._prev_vmed_smooth
+                print("Ajuste: Decremento moderado (11%-17.6%) - Suavizado estándar")
+            elif 0.08 <= diff <= 0.18:
+                # Incremento moderado
+                self._prev_vmed_smooth = self.alpha * vmed + (1 - self.alpha) * self._prev_vmed_smooth
+                print("Ajuste: Incremento moderado (8%-18%) - Suavizado estándar")
+            else:
+                # Variación pequeña
+                self._prev_vmed_smooth = max(vmed, 1e-3)
+                print("Ajuste: Variación pequeña - Suavizado estándar")
 
-    def _calculate_generic_rom(self, angles):
-        """ROM para ejercicios no deadlift"""
-        try:
-            smoothed = savgol_filter(angles, 3, 2)
-            delta_rad = np.deg2rad(max(smoothed) - min(smoothed))
-            return self.segment_length * delta_rad
-        except:
-            return 0.0
+        print(f"Vmed suavizada actualizada: {self._prev_vmed_smooth:.2f}")
+        return self._prev_vmed_smooth + 0.2
 
-    def _calculate_vmed(self, angles, timestamps):
-        """Calcula la Velocidad Media (VMED) del ejercicio.
-
-        Para 'deadlift', se define la fase concéntrica desde el valor mínimo hasta el final de la serie.
-        Se calcula la derivada de la señal usando np.gradient (que considera tiempos no uniformes) y se
-        suaviza la señal derivada aplicando primero un filtro Savitzky–Golay y luego un filtro de mediana.
-        La velocidad media se obtiene como el promedio de la señal filtrada y se corrige empíricamente mediante
-        una multiplicación por 0.5 y una suma de 0.6.
-
+    def _butter_lowpass(self, data: np.ndarray, fs: float, cutoff: float = 6.0, order: int = 4) -> np.ndarray:
+        """
+        Filtro pasabajos Butterworth.
+        
+        Args:
+            data: Señal a filtrar
+            fs: Frecuencia de muestreo
+            cutoff: Frecuencia de corte
+            order: Orden del filtro
+            
         Returns:
-            float: Velocidad media en m/s corregida.
+            Señal filtrada
         """
-        if len(timestamps) < 2:
-            return 0.0
-            
-        if self.exercise == 'deadlift':
-            return self._calculate_deadlift_vmed(angles, timestamps)
-        elif self.exercise == 'squat':
-             return self._calculate_squat_vmed(angles, timestamps)
-        return self._calculate_generic_vmed(angles, timestamps)
-    
-    def _calculate_deadlift_vmed(self, distances, timestamps):
-        """VMED para deadlift con factores de escala de Virtue."""
-        try:
-            i_min = np.argmin(distances)
-            relevant_distances = distances[i_min:]
-            relevant_times = timestamps[i_min:]
-            
-            if len(relevant_times) < 2:
-                return 0.0
+        nyq = 0.5 * fs
+        b, a = butter(order, cutoff / nyq, btype='low', analog=False)
+        padlen = 3 * max(len(a), len(b))
+        if len(data) <= padlen:
+            logging.debug(f"Vector muy corto ({len(data)} pts) → se omite filtro Butterworth.")
+            return data
+        return filtfilt(b, a, data)
 
-            # --- 1. Velocidad instantánea ---
-            inst_vel = np.gradient(relevant_distances, relevant_times)
-            
-            # --- 2. Ajustar kernel_size para medfilt ---
-            # Asegurar kernel impar y menor que la longitud de los datos
-            kernel_size = min(7, len(inst_vel) // 2 * 2 + 1)
-            if kernel_size < 3:  # Mínimo para medfilt
-                kernel_size = 3
-            
-            # --- 3. Aplicar medfilt con el +0.1 (requerido por Virtue) ---
-            filtered = medfilt(inst_vel + 0.1, kernel_size=kernel_size)
-            
-            # --- 4. Aplicar Savitzky-Golay solo si la ventana es válida ---
-            if len(filtered) >= self.savgol_window:
-                filtered = savgol_filter(
-                    filtered, 
-                    window_length=self.savgol_window,
-                    polyorder=self.savgol_polyorder
-                )
-            
-            # --- 5. Calcular VMED con factores de Virtue ---
-            if self.location == 0:
-                vmed = ((np.mean(filtered) *  self.factor) * self.offset) +  0.703#0.703#5
-            else:
-                vmed = ((np.mean(filtered) *  self.factor) * self.offset) +  0.603#0.703#5
-           
-            # --- 6. Evitar valores negativos (si es necesario) ---
-            return max(vmed, 0.0)
-        
-        except Exception as e:
-            print(f"Error calculando VMED: {e}")
-            return 0.0
-    def _calculate_squat_vmed(self, distances, timestamps):
-        """VMED para squat con factores de escala de Virtue."""
-        try:
-            i_min = np.argmin(distances)
-            relevant_distances = distances[i_min:]
-            relevant_times = timestamps[i_min:]
-            
-            if len(relevant_times) < 2:
-                return 0.0
-
-            # --- 1. Velocidad instantánea ---
-            inst_vel = np.gradient(relevant_distances, relevant_times)
-            
-            # --- 2. Ajustar kernel_size para medfilt ---
-            # Asegurar kernel impar y menor que la longitud de los datos
-            kernel_size = min(3, len(inst_vel) // 2 * 2 + 1)
-            if kernel_size < 3:  # Mínimo para medfilt
-                kernel_size = 3
-            
-            # --- 3. Aplicar medfilt con el +0.1 (requerido por Virtue) ---
-            filtered = medfilt(inst_vel, kernel_size=kernel_size)
-            
-            # --- 4. Aplicar Savitzky-Golay solo si la ventana es válida ---
-            if len(filtered) >= self.savgol_window:
-                filtered = savgol_filter(
-                    filtered, 
-                    window_length=self.savgol_window,
-                    polyorder=self.savgol_polyorder
-                )
-            
-            # --- 5. Calcular VMED con factores de Virtue ---
-            if self.location == 0:
-                vmed = ((np.mean(filtered))) 
-                vmed = ((np.mean(filtered))) 
-            
-            # --- 6. Evitar valores negativos (si es necesario) ---
-            return max(vmed, 0.0)
-        
-        except Exception as e:
-            print(f"Error calculando VMED: {e}")
-            return 0.0
-        
-    def _calculate_generic_vmed(self, angles, timestamps):
-        """VMED para otros ejercicios.
-
-        Calcula la velocidad media ajustada (VMED) para ejercicios basados en ángulos articulares,
-        usando datos suavizados y factores de escala biomecánicos. Adecuado para movimientos
-        rotacionales (ej: curls, sentadillas, aperturas).
-
-        Parámetros clave:
-        - `angles`: Lista de ángulos articulares (en grados) durante el ejercicio.
-        - `timestamps`: Marca de tiempo asociada a cada ángulo (en segundos).
-
-        Retorna:
-        - VMED: Velocidad media ajustada (en m/s o unidades de potencia).
+    @staticmethod
+    def _ols_slope(t: np.ndarray, y: np.ndarray) -> float:
         """
-        try:
-            # --- 1. Suavizado de ángulos con Savitzky-Golay ---
-            # - `window_length=3`: Ventana pequeña para preservar picos.
-            # - `polyorder=2`: Polinomio cuadrático para reducir ruido.
-            smoothed = savgol_filter(angles, 3, 2)
-
-            # --- 2. Cálculo de tiempo total y cambio angular ---
-            delta_t = np.diff(timestamps)  # Diferencias entre marcas de tiempo
-            total_time = np.sum(delta_t)   # Tiempo total del movimiento
+        Calcula la pendiente OLS (mínimos cuadrados ordinarios) para una serie de datos.
+        
+        Args:
+            t: Vector de tiempos
+            y: Vector de valores
             
-            # --- 3. Conversión a radianes y acumulación de desplazamiento angular ---
-            # - `np.diff(smoothed)`: Diferencia entre ángulos consecutivos.
-            # - `np.abs(...)`: Considera movimiento en ambas direcciones.
-            # - `np.deg2rad(...)`: Convierte grados a radianes para cálculos físicos.
-            delta_rad = np.deg2rad(np.sum(np.abs(np.diff(smoothed))))
-
-            # --- 4. Cálculo de VMED con factores de escala ---
-            # - `self.segment_length`: Longitud del segmento corporal (ej: brazo/pierna).
-            # - `delta_rad / total_time`: Velocidad angular media (rad/s).
-            # - `* self.vmed_factor * 0.5`: Ajuste específico del modelo (ej: conversión a m/s).
-            # - `+ 0.6`: Offset para alinear con métricas de potencia.
-            vmed = (
-                self.segment_length 
-                * delta_rad 
-                / total_time 
-                * self.vmed_factor 
-                * 0.5 
-            ) + 0.6
-
-            return vmed
-
-        except Exception as e:
-            # Captura errores (ej: delta_t vacío, división por cero)
-            print(f"Error en VMED genérico: {e}")
-            return 0.0
-
-    def _calculate_vmax(self, angles, timestamps):
-        """Calcula la Velocidad Máxima (VMAX) del ejercicio.
-
-        Para 'deadlift', se utiliza la misma segmentación de la fase concéntrica. Se calcula la
-        derivada de la señal con np.gradient, se aplica primero un filtro Savitzky–Golay y luego un
-        filtro de mediana para obtener una señal de velocidades filtrada. Se toma el valor máximo de
-        esta señal y se corrige empíricamente mediante una multiplicación por 0.5 y una suma de 0.7.
-
         Returns:
-            float: Velocidad máxima en m/s corregida.
+            Pendiente de la regresión lineal
         """
-        if len(timestamps) < 2:
-            return 0.0
-            
-        if self.exercise == 'deadlift':
-            return self._calculate_deadlift_vmax(angles, timestamps)
-        elif self.exercise == 'squat':
-             return self._calculate_squat_vmax(angles, timestamps)
-        return self._calculate_generic_vmax(angles, timestamps)
+        t_mean = t.mean()
+        y_mean = y.mean()
+        denom = np.sum((t - t_mean) ** 2)
+        if denom <= 0:
+            return np.nan
+        return np.sum((t - t_mean) * (y - y_mean)) / denom
 
-    def _calculate_deadlift_vmax(self, distances, timestamps):
-        """VMAX específico para deadlift (distancias)"""
-        try:
-            i_min = np.argmin(distances)  # Punto más bajo del movimiento
-            relevant_distances = distances[i_min:]
-            relevant_times = timestamps[i_min:]
-            
-            if len(relevant_distances) < 2:
-                return 0.0
+    def _velocity_gradient(self, t: np.ndarray, y_s: np.ndarray) -> np.ndarray:
+        """Calcula velocidad usando gradiente numérico."""
+        return np.gradient(y_s, t)
 
-            # 1. Velocidad instantánea (magnitud absoluta)
-            inst_vel = np.abs(np.gradient(relevant_distances, relevant_times))
-            
-            # 2. Aplicar Savitzky-Golay primero (si hay suficientes puntos)
-            if len(inst_vel) >= self.savgol_window:
-                filtered = savgol_filter(
-                    inst_vel,
-                    self.savgol_window,
-                    self.savgol_polyorder
-                )
-            else:
-                filtered = inst_vel  # Usar datos crudos si no hay suficientes puntos
-                
-            # 3. Filtro de mediana con kernel fijo = 3 (como en el ejemplo)
-            filtered = medfilt(filtered, kernel_size=5)#7)
-            
-            # 4. Calcular VMAX con factores de Virtue self.vmax_factor 
-            if self.height > 1.84:
-                vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.504#5
-            else:
-                if self.location == 0:
-                    vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.725
-                else:
-                    vmax = (np.max(filtered) *  self.factor * (self.offset*2.05)) + 0.454#5
-           
-            return max(vmax, 0.0)  # Evitar valores negativos
+    def _velocity_ols(self, t: np.ndarray, y_s: np.ndarray) -> np.ndarray:
+        """
+        Calcula velocidad local como pendiente OLS en ventanas centradas.
         
-        except Exception as e:
-            print(f"Error calculando VMAX: {e}")
-            return 0.0
-    
-    
-    def _calculate_squat_vmax(self, distances, timestamps):
-        """VMAX específico para squat (distancias)"""
-        try:
-            i_min = np.argmin(distances)  # Punto más bajo del movimiento
-            relevant_distances = distances[i_min:]
-            relevant_times = timestamps[i_min:]
+        Args:
+            t: Tiempos
+            y_s: Valores suavizados
             
-            if len(relevant_distances) < 2:
-                return 0.0
-
-            # 1. Velocidad instantánea (magnitud absoluta)
-            inst_vel = np.abs(np.gradient(relevant_distances, relevant_times))
-            
-            # 2. Aplicar Savitzky-Golay primero (si hay suficientes puntos)
-            if len(inst_vel) >= self.savgol_window:
-                filtered = savgol_filter(
-                    inst_vel,
-                    self.savgol_window,
-                    self.savgol_polyorder
-                )
-            else:
-                filtered = inst_vel  # Usar datos crudos si no hay suficientes puntos
-                
-            # 3. Filtro de mediana con kernel fijo = 3 (como en el ejemplo)
-            filtered = medfilt(filtered, kernel_size=3)#7)
-            
-            # 4. Calcular VMAX con factores de Virtue self.vmax_factor 
-            if self.height > 1.84:
-                vmax = (np.max(filtered) *  self.factor * 0.5) + 0.504#5
-            else:
-                if self.location == 0:
-                    vmax = (np.max(filtered)) + (self.offset)/3
-                else:
-                    vmax = (np.max(filtered)) + (self.offset) 
-            return max(vmax, 0.0)  # Evitar valores negativos
+        Returns:
+            Vector de velocidades
+        """
+        n = len(t)
+        v = np.full(n, np.nan)
+        half = self.ols_window_seconds / 2.0
+        left_idx = 0
         
-        except Exception as e:
-            print(f"Error calculando VMAX: {e}")
-            return 0.0
+        for i in range(n):
+            t_center = t[i]
+            t_left = t_center - half
+            t_right = t_center + half
+            
+            # Avanzar índice izquierdo
+            while left_idx < n and t[left_idx] < t_left:
+                left_idx += 1
+                
+            right_idx = left_idx
+            while right_idx < n and t[right_idx] <= t_right:
+                right_idx += 1
+                
+            # Mínimo 3 puntos para OLS robusto
+            if right_idx - left_idx >= 3:
+                v[i] = self._ols_slope(t[left_idx:right_idx], y_s[left_idx:right_idx])
+                
+        # Rellenar NaN en bordes
+        isnan = np.isnan(v)
+        if np.any(isnan):
+            # forward fill
+            last = np.nan
+            for i in range(n):
+                if np.isnan(v[i]):
+                    v[i] = last
+                else:
+                    last = v[i]
+            # backward fill
+            last = np.nan
+            for i in range(n-1, -1, -1):
+                if np.isnan(v[i]):
+                    v[i] = last
+                else:
+                    last = v[i]
+                    
+        return v
+
+    def _prep_signal(self, distances_px: List[float], timestamps: List[float]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Preprocesa la señal para cálculo de velocidades.
+        
+        Args:
+            distances_px: Distancias en píxeles
+            timestamps: Tiempos correspondientes
+            
+        Returns:
+            Tupla con (tiempos, valores originales, valores suavizados)
+        """
+        if len(distances_px) != len(timestamps):
+            raise ValueError("distances_px y timestamps deben tener la misma longitud")
+        if len(distances_px) < max(self.smooth_window, 5):
+            raise ValueError("Se requieren más muestras para un suavizado y derivación fiables")
+
+        t = np.asarray(timestamps, dtype=float)
+        if not np.all(np.diff(t) > 0):
+            raise ValueError("timestamps deben ser estrictamente crecientes")
+
+        y = np.asarray(distances_px, dtype=float) 
+
+        # Ajuste de ventana de suavizado
+        win = min(self.smooth_window, len(y) - (1 - self.smooth_polyorder % 2))
+        if win % 2 == 0:  # asegurar impar
+            win = max(3, win - 1)
+            
+        y_s = savgol_filter(y, window_length=win, polyorder=min(self.smooth_polyorder, win - 1))
+        return t, y, y_s
+
+    def compute_v_series(self, distances_px: List[float], timestamps: List[float]) -> np.ndarray:
+        """
+        Calcula la serie de velocidades según el método configurado.
+        
+        Args:
+            distances_px: Distancias en píxeles
+            timestamps: Tiempos correspondientes
+            
+        Returns:
+            Vector de velocidades en m/s
+        """
+        t, _, y_s = self._prep_signal(distances_px, timestamps)
+        if self.vel_method == "gradient":
+            v = self._velocity_gradient(t, y_s)
+        elif self.vel_method == "ols":
+            v = self._velocity_ols(t, y_s)
+        else:
+            raise ValueError("vel_method debe ser 'gradient' u 'ols'")
+        return v
     
-    def _calculate_generic_vmax(self, angles, timestamps):
-        """VMAX para otros ejercicios.
-
-        Calcula la velocidad máxima ajustada (VMAX) para ejercicios basados en ángulos articulares,
-        usando datos suavizados y factores de escala biomecánicos. Adecuado para movimientos
-        rotacionales con picos de velocidad (ej: curls rápidos, swings).
-
-        Parámetros clave:
-        - `angles`: Lista de ángulos articulares (en grados) durante el ejercicio.
-        - `timestamps`: Marca de tiempo asociada a cada ángulo (en segundos).
-
-        Retorna:
-        - VMAX: Velocidad máxima ajustada (en m/s o unidades de potencia).
+    def _calculate_vmax(self, distances_px: List[float], timestamps: List[float]) -> float:
         """
-        try:
-            # --- 1. Suavizado de ángulos con Savitzky-Golay ---
-            # - Reduce ruido mientras preserva picos de velocidad.
-            smoothed = savgol_filter(angles, 3, 2)
-
-            # --- 2. Cálculo de diferencias temporales y angulares ---
-            delta_t = np.diff(timestamps)  # Intervalos de tiempo entre muestras
-            delta_rad = np.deg2rad(np.abs(np.diff(smoothed)))  # Diferencias angulares en radianes
-
-            # --- 3. Velocidad lineal instantánea ---
-            # - Fórmula: velocidad = (longitud_segmento * delta_ángulo) / delta_tiempo
-            # - Ej: Para un brazo de 0.3m, un cambio de 0.5 rad en 0.1s → 1.5 m/s.
-            velocities = (self.segment_length * delta_rad) / delta_t
-
-            # --- 4. Cálculo de VMAX con factores de escala ---
-            # - `np.max(velocities)`: Pico de velocidad durante el movimiento.
-            # - `self.vmax_factor`: Ajuste específico del ejercicio (ej: 0.48 para curls).
-            # - `* 0.5 + 0.7`: Factores de escala y offset del modelo de Virtue.
-            vmax = (np.max(velocities) * self.vmax_factor * 0.5) + 0.7
-
-            return vmax
-
-        except Exception as e:
-            # Captura errores (ej: delta_t=0, arrays vacíos)
-            print(f"Error en VMAX genérico: {e}")
-            return 0.0
-
-    def _build_metrics(self, rom, vmed, vmax, angles, timestamps, repetition):
-        """Construye el diccionario final de métricas.
-
-        Agrupa métricas biomecánicas (ROM, VMED, VMAX), tiempo de repetición,
-        y metadatos en un formato estandarizado. Incluye métricas adicionales
-        específicas para 'deadlift' (ángulos mínimo/máximo).
-
-        Parámetros clave:
-        - `rom`: Rango de Movimiento (ROM) en centímetros.
-        - `vmed`: Velocidad Media Ajustada (VMED) en m/s.
-        - `vmax`: Velocidad Máxima Ajustada (VMAX) en m/s.
-        - `angles`: Lista de ángulos articulares (para ejercicios como 'deadlift').
-        - `timestamps`: Marca de tiempo de la repetición.
-        - `repetition`: Número de la repetición (ej: 1, 2, 3).
-
-        Retorna:
-        - Diccionario con métricas listas para exportar/visualizar.
+        Calcula la Velocidad Máxima (VMAX) en m/s con suavizado entre repeticiones.
+        
+        Args:
+            distances_px: Distancias en píxeles
+            timestamps: Tiempos correspondientes
+            
+        Returns:
+            Velocidad máxima en m/s, con suavizado adaptativo
         """
-        # --- 1. Cálculo del tiempo de repetición ---
-        # - Duración total: último timestamp - primer timestamp.
-        # - Asegura al menos 2 timestamps para evitar errores.
-        rep_time = timestamps[-1] - timestamps[0] if len(timestamps) >= 2 else 0.0
-
-        # --- 2. Diccionario base de métricas ---
-        metrics = {
-            "ROM (cm)": round(rom, 2),          # ROM en centímetros (redondeo a 2 decimales)
-            "VMED (m/s)": round(vmed, 2),       # Velocidad media ajustada
-            "VMAX (m/s)": round(vmax, 2),       # Velocidad máxima ajustada
-            "rep_time": round(rep_time, 2),     # Tiempo total de la repetición (segundos)
-            "repetition": repetition,           # Número de la repetición (ej: 1)
-            "exercise": self.exercise           # Nombre del ejercicio (ej: 'deadlift')
-        }
-
-        # --- 3. Métricas específicas para 'deadlift' ---
-        # - Incluye ángulos mínimo y máximo si existen datos.
-        # - Útil para analizar la postura durante el movimiento.
-        if self.exercise == 'deadlift' and angles:
-            metrics.update({
-                "min_angle": round(min(angles), 2),  # Ángulo más bajo (ej: posición inicial)
-                "max_angle": round(max(angles), 2)   # Ángulo más alto (ej: posición de bloqueo)
-            })
-
-        return metrics
-
-    def _empty_metrics(self, repetition):
-        """Métricas vacías en caso de error.
-
-        Retorna un diccionario con valores predeterminados (cero) para todas las métricas,
-        manteniendo la estructura de datos consistente incluso cuando ocurre un error crítico
-        durante el procesamiento de la repetición. Incluye metadatos esenciales.
-
-        Parámetros clave:
-        - `repetition`: Número de la repetición fallida (ej: 3).
-
-        Retorna:
-        - Diccionario con métricas en cero para evitar errores en sistemas externos.
+        v = self.compute_v_series(distances_px[7:], timestamps[7:])
+        v = v[np.isfinite(v)]
+        if v.size == 0:
+            raise ValueError("No se pudo calcular velocidad válida")
+        
+        current_vmax = float(np.max(v))
+        
+        # Inicialización si es la primera vez
+        if self._prev_vmax_smooth is None:
+            self._prev_vmax_smooth = current_vmax
+            return current_vmax
+        
+        # Cálculo de diferencia porcentual
+        diff = (current_vmax - self._prev_vmax_smooth) / self._prev_vmax_smooth
+        print(diff)
+        
+        # Lógica de suavizado adaptativo
+        if diff > 0.25:
+            # Incremento significativo (>25%)
+            self._prev_vmax_smooth = self.alpha * current_vmax + (1 - self.alpha) * self._prev_vmax_smooth
+        elif diff < -0.176:
+            # Decremento significativo (<-17.6%)
+            self._prev_vmax_smooth = self._prev_vmax_smooth * 0.95  # Máxima reducción permitida: 5%
+        else:
+            if -0.176 <= diff <= -0.11:
+                # Decremento moderado
+                self._prev_vmax_smooth = self.alpha * current_vmax + (1 - self.alpha) * self._prev_vmax_smooth
+            elif 0.08 <= diff <= 0.18:
+                # Incremento moderado
+                self._prev_vmax_smooth = self.alpha * current_vmax + (1 - self.alpha) * self._prev_vmax_smooth
+            else:
+                # Variación pequeña
+                self._prev_vmax_smooth = self.alpha * current_vmax + (1 - self.alpha) * self._prev_vmax_smooth
+        
+        return self._prev_vmax_smooth
+    
+    def _empty_metrics(self, repetition: int) -> dict:
+        """
+        Devuelve un diccionario de métricas vacías para repeticiones inválidas.
+        
+        Args:
+            repetition: Número de repetición
+            
+        Returns:
+            Diccionario con valores cero y flags apropiados
         """
         return {
-            "ROM (cm)": 0.0,          # Rango de Movimiento (valor nulo)
-            "VMED (m/s)": 0.0,        # Velocidad Media Ajustada (sin datos)
-            "VMAX (m/s)": 0.0,        # Velocidad Máxima Ajustada (sin datos)
-            "rep_time": 0.0,          # Tiempo de repetición (0 segundos)
-            "repetition": repetition, # Número de la repetición (ej: 2)
-            "exercise": self.exercise # Nombre del ejercicio (ej: 'squat')
+            "ROM (cm)": 0.0,
+            "ROM_tol (m)": 0.0,
+            "VMED (m/s)": 0.0,
+            "VMED_tol (m/s)": 0.0,
+            "VMAX (m/s)": 0.0,
+            "VMAX_tol (m/s)": 0.0,
+            "rep_time": 0.0,
+            "repetition": repetition,
+            "exercise": self.exercise,
+            "valid": False
         }

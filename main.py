@@ -6,7 +6,7 @@ import logging
 from loggin_config import setup_logging
 from constants import Constants as K
 
-from utils.metrics import Metrics
+from utils.metrics1 import Metrics
 from utils.visors import MotionAnalyzer
 from utils.overlay import draw_overlays
 from utils.csv_exporter import export_metrics
@@ -17,7 +17,7 @@ from pose_estimator import PoseEstimator
 from exercises.curl import CurlExercise
 from exercises.squat import SquatExercise
 from exercises.pushup import PushupExercise
-from exercises.deadlift import DeadliftExercise
+from exercises.deadlift1 import DeadliftExercise
 from exercises.reverse_fly import ReverseFlyExercise
 from exercises.swing import SwingExercise
 from exercises.renegade_row import RenegadeRowExercise
@@ -43,7 +43,7 @@ class_mapping = {
 }
 
 # Configuración de parámetros del sujeto
-subject_height = 1.84  # Altura en metros
+subject_height = 1.85  # Altura en metros
 subject_gender = "male"
 subject_age = 21
 # Selección del lado a analizar (puede ser 'left' o 'right')
@@ -125,7 +125,7 @@ def main(input_source):
             out = None
 
         # Instancia del objeto Metrics para calcular las métricas según el ejercicio.
-        metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age)
+        metrics_obj = Metrics(exercise_type, subject_height, subject_gender, subject_age, 1, 1, 1)#Metrics(exercise_type, subject_height, subject_gender, subject_age)
         
         last_counter = 0
         smooth_progress = 0.0
