@@ -72,5 +72,21 @@ Una vez que tenga activado el entorno virtual, se ejecutará el  siguiente coman
 Desdde una terminal, teniendo el entorno virtual activado, se procederá a ejecutar el siguiente comando
 
 ```bash
-  python video.py
+  python realtime2.py \
+  --exercise deadlift \
+  --video PesoMuerto_3_1004_100REPES.MP4 \
+  --height 1.75 \
+  --model yolo11n-pose.pt \
+  --device cpu \
+  --imgsz 448 \
+  --kp_conf 0.20 \
+  --sg_win_ms 121 \
+  --min_rep_s 0.45 --min_conc_s 0.18 \
+  --rom_min_m 0.025 \
+  --v_thr_mps_min 0.006 \
+  --view lateral \
+  --slow_mode \
+  --show --draw_pose \
+  --save_video deadlift_annot.mp4
+
 ```
